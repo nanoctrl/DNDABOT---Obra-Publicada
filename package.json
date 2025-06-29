@@ -1,6 +1,6 @@
 {
   "name": "registro-obras-bot",
-  "version": "1.0.0",
+  "version": "2.4.1",
   "description": "Bot de automatización de trámites gubernamentales de Argentina",
   "main": "dist/main.js",
   "scripts": {
@@ -11,7 +11,11 @@
     "test:watch": "jest --watch",
     "tools:find-selector": "ts-node tools/find-selector.ts",
     "tools:audit": "ts-node tools/audit-selectors.ts",
-    "explore": "ts-node src/main.ts --explore"
+    "explore": "ts-node src/main.ts --explore",
+    "grabar:paso12": "node grabar-paso12-final.js",
+    "inspect": "PWDEBUG=1 ts-node src/main.ts",
+    "ejecutar": "node ejecutar-bot.js",
+    "run:prod": "DEVELOPER_DEBUG_MODE=false npm run dev"
   },
   "keywords": ["automation", "bot", "playwright", "argentina"],
   "author": "",

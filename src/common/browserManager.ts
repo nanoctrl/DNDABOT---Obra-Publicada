@@ -11,8 +11,12 @@ export interface BrowserManager {
 export async function initializeBrowser(): Promise<BrowserManager> {
   logger.info('Inicializando navegador...');
   
+  let browser: Browser | undefined;
+  let context: BrowserContext | undefined;
+  let page: Page | undefined;
+  
   try {
-    const browser = await chromium.launch({
+    browser = await chromium.launch({
       headless: false,
       args: [
         '--disable-blink-features=AutomationControlled',
@@ -24,10 +28,10 @@ export async function initializeBrowser(): Promise<BrowserManager> {
         '--disable-gpu'
       ],
       ignoreDefaultArgs: ['--enable-automation'],
-      timeout: 30000
+      timeout: config.DEFAULT_TIMEOUT
     });
 
-    const context = await browser.newContext({
+    context = await browser.newContext({
       viewport: { width: 1280, height: 720 },
       userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
       locale: 'es-AR',
@@ -51,17 +55,43 @@ export async function initializeBrowser(): Promise<BrowserManager> {
       });
     }
 
-    const page = await context.newPage();
+    page = await context.newPage();
     
     // Set default timeout
-    page.setDefaultTimeout(30000);
-    page.setDefaultNavigationTimeout(30000);
+    page.setDefaultTimeout(config.DEFAULT_TIMEOUT);
+    page.setDefaultNavigationTimeout(config.NAVIGATION_TIMEOUT);
 
     logger.info('Navegador inicializado correctamente');
     
     return { browser, context, page };
   } catch (error) {
     logger.error('Error al inicializar el navegador:', error);
+    
+    // Cleanup en caso de error
+    if (page) {
+      try {
+        await page.close();
+      } catch (e) {
+        logger.error('Error cerrando página:', e);
+      }
+    }
+    
+    if (context) {
+      try {
+        await context.close();
+      } catch (e) {
+        logger.error('Error cerrando contexto:', e);
+      }
+    }
+    
+    if (browser) {
+      try {
+        await browser.close();
+      } catch (e) {
+        logger.error('Error cerrando navegador:', e);
+      }
+    }
+    
     throw error;
   }
 }
@@ -69,23 +99,58 @@ export async function initializeBrowser(): Promise<BrowserManager> {
 export async function closeBrowser(browserManager: BrowserManager): Promise<void> {
   logger.info('Cerrando navegador...');
   
-  try {
-    const { browser, context, page } = browserManager;
-    
-    // Stop tracing if it was started
-    if (config.DEVELOPER_DEBUG_MODE) {
+  const { browser, context, page } = browserManager;
+  const errors: Error[] = [];
+  
+  // Stop tracing if it was started
+  if (config.DEVELOPER_DEBUG_MODE && context) {
+    try {
       const tracePath = `output/debug_runs/trace_${Date.now()}.zip`;
       await context.tracing.stop({ path: tracePath });
       logger.info(`Trace guardado en: ${tracePath}`);
+    } catch (error) {
+      logger.error('Error al detener tracing:', error);
+      errors.push(error as Error);
     }
-    
-    await page.close();
-    await context.close();
-    await browser.close();
-    
+  }
+  
+  // Cerrar página
+  if (page) {
+    try {
+      await page.close();
+    } catch (error) {
+      logger.error('Error al cerrar página:', error);
+      errors.push(error as Error);
+    }
+  }
+  
+  // Cerrar contexto
+  if (context) {
+    try {
+      await context.close();
+    } catch (error) {
+      logger.error('Error al cerrar contexto:', error);
+      errors.push(error as Error);
+    }
+  }
+  
+  // Wait 5 seconds before closing browser to allow visual verification
+  logger.info('Esperando 5 segundos antes de cerrar el navegador...');
+  await new Promise(resolve => setTimeout(resolve, 5000));
+  
+  // Cerrar navegador
+  if (browser) {
+    try {
+      await browser.close();
+    } catch (error) {
+      logger.error('Error al cerrar navegador:', error);
+      errors.push(error as Error);
+    }
+  }
+  
+  if (errors.length > 0) {
+    logger.warn(`Navegador cerrado con ${errors.length} errores`);
+  } else {
     logger.info('Navegador cerrado correctamente');
-  } catch (error) {
-    logger.error('Error al cerrar el navegador:', error);
-    throw error;
   }
 }

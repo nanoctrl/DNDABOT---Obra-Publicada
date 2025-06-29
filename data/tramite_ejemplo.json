@@ -1,13 +1,13 @@
 {
   "obra": {
-    "titulo": "Rio y Mar",
-    "tipo": "Música y letra",
+    "titulo": "Cancion de amor",
+    "tipo": "Música",
     "album": false,
-    "cantidad_ejemplares": 500,
-    "genero_musical": "Rock",
+    "cantidad_ejemplares": 499,
+    "genero_musical": "Electronica",
     "esPublicacionWeb": false,
     "lugar_publicacion": "Ciudad Autónoma de Buenos Aires",
-    "fecha_publicacion": "24-11-2025"
+    "fecha_publicacion": "24-01-2025"
   },
   "autores": [
     {
@@ -41,6 +41,6 @@
     "cuitCuil": "20352552721",
     "claveAfip": "Levitateme5023",
     "representado": "EPSA PUBLISHING S A",
-    "emailNotificaciones": "nmaeso@gmal.com"
+    "emailNotificaciones": "nmaeso@gmail.com"
   }
 }

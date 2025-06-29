@@ -1,9 +1,9 @@
-import { tramiteCompletoSchema } from '../../src/types/schema';
+import { TramiteDataSchema } from '../../src/types/schema';
 import * as fs from 'fs';
 import * as path from 'path';
 
 describe('Schema Validation', () => {
-  describe('tramiteCompletoSchema', () => {
+  describe('TramiteDataSchema', () => {
     it('should validate a complete valid tramite', () => {
       const validData = {
         obra: {
@@ -52,7 +52,7 @@ describe('Schema Validation', () => {
         }
       };
 
-      const result = tramiteCompletoSchema.safeParse(validData);
+      const result = TramiteDataSchema.safeParse(validData);
       expect(result.success).toBe(true);
     });
 
@@ -77,7 +77,7 @@ describe('Schema Validation', () => {
         }
       };
 
-      const result = tramiteCompletoSchema.safeParse(invalidData);
+      const result = TramiteDataSchema.safeParse(invalidData);
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error.errors.length).toBeGreaterThan(0);
@@ -94,6 +94,7 @@ describe('Schema Validation', () => {
           genero_musical: "Pop",
           esPublicacionWeb: true,
           urlPaginaWeb: "https://example.com/cancion",
+          lugar_publicacion: "Buenos Aires",
           fecha_publicacion: "01-01-2025"
         },
         autores: [
@@ -113,7 +114,10 @@ describe('Schema Validation', () => {
         }
       };
 
-      const result = tramiteCompletoSchema.safeParse(webPublicationData);
+      const result = TramiteDataSchema.safeParse(webPublicationData);
+      if (!result.success) {
+        console.log('Validation errors:', result.error.errors);
+      }
       expect(result.success).toBe(true);
     });
 
@@ -164,7 +168,7 @@ describe('Schema Validation', () => {
         }
       };
 
-      const result = tramiteCompletoSchema.safeParse(personaFisicaData);
+      const result = TramiteDataSchema.safeParse(personaFisicaData);
       expect(result.success).toBe(true);
     });
   });
@@ -175,7 +179,7 @@ describe('Schema Validation', () => {
       const exampleContent = fs.readFileSync(examplePath, 'utf-8');
       const exampleData = JSON.parse(exampleContent);
 
-      const result = tramiteCompletoSchema.safeParse(exampleData);
+      const result = TramiteDataSchema.safeParse(exampleData);
       expect(result.success).toBe(true);
     });
   });

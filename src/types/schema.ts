@@ -1,6 +1,21 @@
 import { z } from 'zod';
 
-// Schema for obra data - Musical works only
+/**
+ * Schema for obra data - Musical works only
+ * 
+ * Lógica de validación para lugar_publicacion y urlPaginaWeb:
+ * 
+ * 1. lugar_publicacion: SIEMPRE requerido (independiente del tipo de publicación)
+ *    - Se usa en el formulario SOLO si esPublicacionWeb = false
+ *    - Si esPublicacionWeb = true, el campo existe pero no se usa en el formulario
+ * 
+ * 2. urlPaginaWeb: Condicional según esPublicacionWeb
+ *    - Si esPublicacionWeb = true: OBLIGATORIO y debe ser URL válida
+ *    - Si esPublicacionWeb = false: OPCIONAL (puede estar undefined o vacío)
+ * 
+ * Esta lógica permite que ambos campos estén presentes en los datos,
+ * pero su validación y uso depende del contexto de la publicación.
+ */
 export const ObraSchema = z.object({
   titulo: z.string().min(1, 'El título es requerido'),
   tipo: z.enum(['Música', 'Letra', 'Música y letra']),
@@ -9,18 +24,24 @@ export const ObraSchema = z.object({
   genero_musical: z.string().min(1, 'El género musical es requerido'),
   esPublicacionWeb: z.boolean(),
   urlPaginaWeb: z.string().url().optional(),
-  lugar_publicacion: z.string().optional(),
-  fecha_publicacion: z.string().regex(/^\d{2}-\d{2}-\d{4}$/, 'El formato debe ser DD-MM-AAAA')
+  lugar_publicacion: z.string().min(1, 'El lugar de publicación es requerido'),
+  fecha_publicacion: z.string().regex(/^\d{2}-\d{2}-\d{4}$/, 'El formato debe ser DD-MM-AAAA'),
+  numero_internacional: z.string().optional()
 }).refine(
   (data) => {
+    // Lógica de validación condicional:
+    // - Si esPublicacionWeb = true: DEBE tener urlPaginaWeb válida
+    // - Si esPublicacionWeb = false: NO requiere urlPaginaWeb (puede estar vacía)
+    // - lugar_publicacion es SIEMPRE requerido (independiente del tipo de publicación)
     if (data.esPublicacionWeb) {
-      return !!data.urlPaginaWeb;
-    } else {
-      return !!data.lugar_publicacion;
+      return !!data.urlPaginaWeb && data.urlPaginaWeb.trim().length > 0;
     }
+    // Si no es publicación web, no validamos urlPaginaWeb
+    return true;
   },
   {
-    message: 'Si es publicación web debe incluir URL, si no debe incluir lugar de publicación'
+    message: 'Para publicaciones web es obligatorio incluir una URL válida en urlPaginaWeb',
+    path: ['urlPaginaWeb'] // Indica que el error se refiere a este campo
   }
 );
 

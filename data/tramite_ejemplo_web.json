@@ -1,0 +1,47 @@
+{
+  "obra": {
+    "titulo": "Cancion Digital",
+    "tipo": "Música y letra",
+    "album": true,
+    "cantidad_ejemplares": 1000,
+    "genero_musical": "Pop",
+    "esPublicacionWeb": true,
+    "lugar_publicacion": "Ciudad Autónoma de Buenos Aires",
+    "urlPaginaWeb": "https://music.example.com/cancion-digital",
+    "fecha_publicacion": "15-02-2025"
+  },
+  "autores": [
+    {
+      "nombre": { "primerNombre": "Ana" },
+      "apellido": { "primerApellido": "Rodriguez" },
+      "fiscalId": { "tipo": "CUIT", "numero": "27-22222222-2" },
+      "nacionalidad": "Argentina",
+      "rol": "Música y Letra"
+    }
+  ],
+  "editores": [
+    {
+      "tipoPersona": "Persona Juridica",
+      "razonSocial": "Digital Music S.A.",
+      "cuit": "30-11111111-1",
+      "email": "contacto@digitalmusic.com.ar",
+      "telefono": "11 4444 5555",
+      "porcentajeTitularidad": 10,
+      "domicilio": {
+        "calleYNumero": "Av. Corrientes 1000", 
+        "piso": "10", 
+        "departamento": "A", 
+        "cp": "1043",
+        "localidad": "CIUDAD AUTÓNOMA DE BUENOS AIRES", 
+        "provincia": "CIUDAD AUTÓNOMA DE BUENOS AIRES", 
+        "pais": "Argentina"
+      }
+    }
+  ],
+  "gestor": {
+    "cuitCuil": "20352552721",
+    "claveAfip": "Levitateme5023",
+    "representado": "DIGITAL MUSIC S A",
+    "emailNotificaciones": "nmaeso@gmail.com"
+  }
+}

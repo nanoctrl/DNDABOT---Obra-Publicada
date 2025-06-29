@@ -16,7 +16,7 @@ async function main(): Promise<void> {
     await orchestrator.run({ exploratoryMode: isExploratoryMode });
     
     logger.info('✅ Bot finalizado correctamente');
-    process.exit(0);
+    // Remove immediate process.exit to allow browser closing sequence to complete
   } catch (error) {
     logger.error('❌ Error fatal en el bot:', error);
     process.exit(1);

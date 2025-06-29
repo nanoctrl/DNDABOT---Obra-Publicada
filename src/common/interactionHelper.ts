@@ -1,5 +1,7 @@
 import { Page, Locator } from 'playwright';
 import { logger } from './logger';
+import { config } from '../config';
+import { getStepTracker } from './stepTracker';
 
 export interface InteractionStrategy {
   name: string;
@@ -16,9 +18,11 @@ export async function tryInteraction(
   page: Page,
   action: 'click' | 'fill' | 'select' | 'check',
   strategies: InteractionStrategy[],
-  value?: string
+  value?: string,
+  stepNumber?: number
 ): Promise<InteractionResult> {
   logger.info(`Intentando ${action} con ${strategies.length} estrategias`);
+  const stepTracker = getStepTracker();
   
   for (const strategy of strategies) {
     try {
@@ -33,7 +37,7 @@ export async function tryInteraction(
       }
       
       // Wait for element to be visible and enabled
-      await locator.first().waitFor({ state: 'visible', timeout: 5000 });
+      await locator.first().waitFor({ state: 'visible', timeout: config.INTERACTION_TIMEOUT / 2 });
       
       // Perform action
       switch (action) {
@@ -53,7 +57,13 @@ export async function tryInteraction(
           break;
       }
       
-      logger.info(`SUCCESS_STRATEGY: ${strategy.name} - Acción ${action} completada exitosamente`);
+      logger.info(`✅ SUCCESS_STRATEGY: ${strategy.name} - Acción ${action} completada exitosamente`);
+      
+      // Log to step tracker if step number provided
+      if (stepNumber) {
+        stepTracker.logSuccess(stepNumber, strategy.name);
+      }
+      
       return { success: true, strategy: strategy.name };
       
     } catch (error) {
@@ -64,19 +74,40 @@ export async function tryInteraction(
   
   const error = new Error(`Todas las estrategias fallaron para la acción ${action}`);
   logger.error(error.message);
+  
+  // Log error to step tracker if step number provided
+  if (stepNumber) {
+    stepTracker.logError(stepNumber, error.message);
+  }
+  
   return { success: false, error };
 }
 
 export async function waitForNavigation(page: Page, options?: { timeout?: number }): Promise<void> {
-  const timeout = options?.timeout || 30000;
+  const timeout = options?.timeout || config.NAVIGATION_TIMEOUT;
   
   try {
-    await Promise.race([
-      page.waitForLoadState('networkidle', { timeout }),
-      page.waitForLoadState('domcontentloaded', { timeout: timeout / 2 })
-    ]);
+    // Primero esperar a que el DOM esté cargado
+    await page.waitForLoadState('domcontentloaded', { timeout: timeout / 3 });
+    
+    // Luego intentar esperar a que la red esté inactiva, pero con un timeout más corto
+    try {
+      await page.waitForLoadState('networkidle', { timeout: timeout / 2 });
+    } catch (networkError) {
+      // Si la red no se calma, al menos esperamos un poco más
+      logger.debug('Network no llegó a estar idle, esperando un momento adicional');
+      await page.waitForTimeout(1000);
+    }
+    
+    // Verificar que la página esté lista verificando elementos comunes
+    try {
+      await page.waitForSelector('body', { timeout: 1000 });
+    } catch (e) {
+      logger.warn('No se encontró body element, la página podría no estar completamente cargada');
+    }
+    
   } catch (error) {
-    logger.warn('Timeout esperando navegación, continuando...');
+    logger.warn('Timeout esperando navegación, continuando...', error);
   }
 }
 

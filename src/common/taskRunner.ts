@@ -1,4 +1,5 @@
 import { logger } from './logger';
+import { config } from '../config';
 
 export interface RetryOptions {
   retries: number;
@@ -60,9 +61,9 @@ export async function runCriticalTask<T>(
   
   try {
     const result = await executeWithRetries(task, {
-      retries: 3,
-      delay: 2000,
-      backoff: true
+      retries: config.MAX_RETRIES,
+      delay: config.RETRY_DELAY,
+      backoff: config.RETRY_BACKOFF
     });
     
     logger.info(`✅ Tarea crítica completada: ${taskName}`);

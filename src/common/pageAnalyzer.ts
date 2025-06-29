@@ -1,5 +1,8 @@
 import { Page } from 'playwright';
-import { logger } from './logger';
+import { createLogger } from './logger';
+import { takeScreenshot } from './screenshotManager';
+import fs from 'fs/promises';
+import path from 'path';
 
 export interface ElementInfo {
   tag: string;
@@ -59,8 +62,408 @@ export interface NavigationAnalysis {
   sidebar?: ElementInfo[];
 }
 
-export async function analyzePage(page: Page): Promise<PageAnalysis> {
-  logger.info('Analizando estructura de la página...');
+const logger = createLogger('PageAnalyzer');
+
+// Nueva función para análisis específico de depósito digital
+export async function analyzeDepositoDigitalContext(page: Page, captureScreenshot: boolean = false): Promise<{
+  section: ElementInfo | null;
+  dropdownButtons: ElementInfo[];
+  options: ElementInfo[];
+  recommendedSelectors: string[];
+  fullPageContext: string;
+  screenshotPath?: string;
+}> {
+  const context = {
+    section: null as ElementInfo | null,
+    dropdownButtons: [] as ElementInfo[],
+    options: [] as ElementInfo[],
+    recommendedSelectors: [] as string[],
+    fullPageContext: '',
+    screenshotPath: undefined as string | undefined
+  };
+
+  try {
+    // Solo log si no estamos en modo silencioso
+    if (!captureScreenshot) {
+      logger.info('🔍 Analizando contexto específico de depósito digital...');
+    }
+    
+    // Capturar screenshot si se solicita (durante análisis de fallo)
+    if (captureScreenshot) {
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const screenshotName = `deposito_context_analysis_${timestamp}`;
+      await takeScreenshot(page, screenshotName, 'error');
+      context.screenshotPath = `output/screenshots/error/${screenshotName}.png`;
+    }
+    
+    // Obtener HTML completo para análisis
+    context.fullPageContext = await page.content();
+    
+    // Buscar la sección de "Modo de depósito"
+    const sectionSelectors = [
+      'div:has-text("Modo de depósito")',
+      'div:has-text("depósito")',
+      'div:has-text("digitalmente")',
+      '*:has-text("¿Usted opta por depositar")',
+      'label:has-text("depósito")'
+    ];
+
+    for (const selector of sectionSelectors) {
+      try {
+        const elements = await page.locator(selector).all();
+        for (const element of elements) {
+          if (await element.isVisible()) {
+            const info = await getElementInfo(element);
+            if (info) {
+              context.section = info;
+              logger.info(`✅ Sección encontrada: ${selector}`);
+              break;
+            }
+          }
+        }
+        if (context.section) break;
+      } catch (error) {
+        // Continuar con siguiente selector
+      }
+    }
+
+    // Buscar botones de dropdown con múltiples estrategias
+    const dropdownStrategies = [
+      { name: 'Botones con ID que termina en -btn', selector: 'button[id$="-btn"]' },
+      { name: 'Botones con clase dropdown', selector: 'button[class*="dropdown"]' },
+      { name: 'Elementos con rol combobox', selector: '[role="combobox"]' },
+      { name: 'Botones dentro de form-group', selector: '.form-group button' },
+      { name: 'Botones cerca de texto depósito', selector: 'div:has-text("depósito") button' },
+      { name: 'Cualquier botón visible', selector: 'button:visible' }
+    ];
+
+    for (const strategy of dropdownStrategies) {
+      try {
+        const elements = await page.locator(strategy.selector).all();
+        if (!captureScreenshot) {
+          logger.info(`🎯 Probando estrategia: ${strategy.name} - encontrados ${elements.length} elementos`);
+        }
+        
+        for (const element of elements) {
+          if (await element.isVisible()) {
+            const info = await getElementInfo(element);
+            if (info) {
+              context.dropdownButtons.push(info);
+              context.recommendedSelectors.push(`${strategy.selector} (${strategy.name})`);
+              
+              // Log detallado del botón encontrado solo si no es modo silencioso
+              if (!captureScreenshot) {
+                logger.info(`  📌 Botón: ${info.tag}${info.id ? `#${info.id}` : ''}${info.classes ? `.${info.classes[0]}` : ''} - "${info.text}"`);
+              }
+            }
+          }
+        }
+      } catch (error) {
+        if (!captureScreenshot) {
+          logger.warn(`⚠️ Error con estrategia ${strategy.name}:`, error);
+        }
+      }
+    }
+
+    // Buscar opciones "Si" con múltiples estrategias
+    const optionStrategies = [
+      { name: 'Celdas con texto Si', selector: 'td:has-text("Si")' },
+      { name: 'Elementos cell con texto Si', selector: '[role="cell"]:has-text("Si")' },
+      { name: 'Opciones de select', selector: 'option:has-text("Si")' },
+      { name: 'Items de lista', selector: 'li:has-text("Si")' },
+      { name: 'Elementos con role option', selector: '[role="option"]:has-text("Si")' },
+      { name: 'Cualquier elemento con texto Si', selector: '*:has-text("Si"):visible' }
+    ];
+
+    for (const strategy of optionStrategies) {
+      try {
+        const elements = await page.locator(strategy.selector).all();
+        if (!captureScreenshot) {
+          logger.info(`🎯 Probando estrategia opciones: ${strategy.name} - encontrados ${elements.length} elementos`);
+        }
+        
+        for (const element of elements) {
+          if (await element.isVisible()) {
+            const info = await getElementInfo(element);
+            if (info && info.text?.includes('Si')) {
+              context.options.push(info);
+              if (!captureScreenshot) {
+                logger.info(`  📌 Opción: ${info.tag}${info.id ? `#${info.id}` : ''} - "${info.text}"`);
+              }
+            }
+          }
+        }
+      } catch (error) {
+        if (!captureScreenshot) {
+          logger.warn(`⚠️ Error con estrategia opciones ${strategy.name}:`, error);
+        }
+      }
+    }
+
+    // Log resumen solo si no es modo silencioso
+    if (!captureScreenshot) {
+      logger.info(`📊 RESUMEN DEL ANÁLISIS:`);
+      logger.info(`  • Sección depósito: ${context.section ? '✅ Encontrada' : '❌ No encontrada'}`);
+      logger.info(`  • Botones dropdown: ${context.dropdownButtons.length} encontrados`);
+      logger.info(`  • Opciones "Si": ${context.options.length} encontradas`);
+      logger.info(`  • Selectores recomendados: ${context.recommendedSelectors.length}`);
+    }
+
+  } catch (error) {
+    if (!captureScreenshot) {
+      logger.error('❌ Error durante análisis de contexto depósito digital:', error);
+    }
+  }
+
+  return context;
+}
+
+// Función silenciosa para análisis de depósito digital
+async function analyzeDepositoDigitalContextSilently(page: Page, captureScreenshot: boolean = false): Promise<any> {
+  return await analyzeDepositoDigitalContext(page, captureScreenshot);
+}
+
+// Función silenciosa para análisis general de página
+async function analyzePageSilently(page: Page): Promise<PageAnalysis> {
+  // Usar la función existente pero sin logs
+  return await analyzePage(page, true);
+}
+
+// Nueva función para análisis completo de paso EN CASO DE FALLO
+export async function analyzeStepFailure(page: Page, stepNumber: number, stepDescription: string, error: Error): Promise<string> {
+  try {
+    // CREAR DIRECTORIO DE ANÁLISIS CON TIMESTAMP
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const analysisDir = path.join(process.cwd(), 'output', 'analysis', 'failures', `step${stepNumber}_${timestamp}`);
+    await fs.mkdir(analysisDir, { recursive: true });
+    
+    // CAPTURAR SCREENSHOT SILENCIOSAMENTE
+    const screenshotName = `FAILURE_step${stepNumber}_${timestamp}`;
+    await takeScreenshot(page, screenshotName, 'error');
+    
+    // ANÁLISIS SILENCIOSO (sin logs detallados al console)
+    const analysis = await analyzePageSilently(page);
+    
+    // Análisis específico si es paso de depósito digital
+    let depositoContext = null;
+    if (stepDescription.toLowerCase().includes('depósito') || stepNumber === 13) {
+      depositoContext = await analyzeDepositoDigitalContextSilently(page, true);
+    }
+    
+    // GUARDAR TODO EN EL DIRECTORIO ESPECÍFICO
+    await saveStepFailureAnalysisSilently(analysisDir, stepNumber, stepDescription, analysis, depositoContext, error, screenshotName);
+    
+    // SOLO MOSTRAR EL DIRECTORIO DONDE SE GUARDÓ TODO
+    logger.error(`\n💥 FALLO EN PASO ${stepNumber}: ${stepDescription}`);
+    logger.error(`❌ Error: ${error.message}`);
+    logger.error(`📁 ANÁLISIS COMPLETO GUARDADO EN: ${analysisDir}`);
+    logger.error(`📸 Screenshot: output/screenshots/error/${screenshotName}.png`);
+    logger.error(`\n🔄 CERRANDO PROCESO DESPUÉS DEL ANÁLISIS...`);
+    
+    // CERRAR EL PROCESO DESPUÉS DEL ANÁLISIS
+    setTimeout(() => {
+      process.exit(1);
+    }, 1000); // Dar 1 segundo para que se complete el logging
+    
+    return analysisDir;
+    
+  } catch (analysisError) {
+    logger.error(`❌ Error durante análisis post-fallo del paso ${stepNumber}:`, analysisError);
+    return '';
+  }
+}
+
+// Función SILENCIOSA para guardar análisis de FALLO
+async function saveStepFailureAnalysisSilently(
+  analysisDir: string,
+  stepNumber: number, 
+  stepDescription: string, 
+  analysis: PageAnalysis, 
+  depositoContext: any,
+  error: Error,
+  screenshotName: string
+): Promise<void> {
+  try {
+    // ARCHIVO PRINCIPAL DE ANÁLISIS
+    const mainAnalysisFile = path.join(analysisDir, 'failure_analysis.json');
+    const failureAnalysis = {
+      type: 'STEP_FAILURE_ANALYSIS',
+      stepNumber,
+      stepDescription,
+      timestamp: new Date().toISOString(),
+      screenshot: {
+        filename: `${screenshotName}.png`,
+        path: `output/screenshots/error/${screenshotName}.png`,
+        description: `Screenshot captured at moment of failure for step ${stepNumber}`
+      },
+      error: {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      },
+      recommendations: generateFailureRecommendations(analysis, depositoContext, error),
+      possibleSolutions: generatePossibleSolutions(stepNumber, analysis, depositoContext, error)
+    };
+    await fs.writeFile(mainAnalysisFile, JSON.stringify(failureAnalysis, null, 2));
+
+    // ARCHIVO DETALLADO DE PÁGINA
+    const pageAnalysisFile = path.join(analysisDir, 'page_analysis.json');
+    await fs.writeFile(pageAnalysisFile, JSON.stringify(analysis, null, 2));
+
+    // ARCHIVO DE CONTEXTO DEPÓSITO (si existe)
+    if (depositoContext) {
+      const depositoAnalysisFile = path.join(analysisDir, 'deposito_context.json');
+      await fs.writeFile(depositoAnalysisFile, JSON.stringify(depositoContext, null, 2));
+    }
+
+    // ARCHIVO HTML COMPLETO
+    if (depositoContext?.fullPageContext) {
+      const htmlFile = path.join(analysisDir, 'page_source.html');
+      await fs.writeFile(htmlFile, depositoContext.fullPageContext);
+    }
+
+    // ARCHIVO README CON EXPLICACIÓN
+    const readmeFile = path.join(analysisDir, 'README.md');
+    const readmeContent = `# Análisis de Fallo - Paso ${stepNumber}
+
+## Información del Fallo
+- **Paso**: ${stepNumber} - ${stepDescription}
+- **Error**: ${error.message}
+- **Timestamp**: ${new Date().toISOString()}
+
+## Archivos Generados
+
+### 📊 failure_analysis.json
+Análisis principal con error, recomendaciones y soluciones.
+
+### 📄 page_analysis.json  
+Análisis detallado de la estructura de la página (botones, formularios, elementos).
+
+${depositoContext ? '### 🎛️ deposito_context.json\nAnálisis específico del contexto de depósito digital (botones dropdown, opciones "Si").\n' : ''}
+
+### 📸 Screenshot
+Ver: \`output/screenshots/error/${screenshotName}.png\`
+
+### 🌐 page_source.html
+HTML completo de la página en el momento del fallo.
+
+## Próximos Pasos
+1. Revisar las recomendaciones en \`failure_analysis.json\`
+2. Examinar el screenshot para entender el estado visual
+3. Probar las soluciones sugeridas en \`possibleSolutions\`
+`;
+    await fs.writeFile(readmeFile, readmeContent);
+
+  } catch (saveError) {
+    logger.error('❌ Error guardando análisis de fallo:', saveError);
+  }
+}
+
+// Función para generar recomendaciones basadas en FALLO
+function generateFailureRecommendations(analysis: PageAnalysis, depositoContext: any, error: Error): string[] {
+  const recommendations: string[] = [];
+  
+  // Análisis específico del error
+  if (error.message.includes('timeout') || error.message.includes('Timeout')) {
+    recommendations.push('🕐 TIMEOUT detectado - el elemento puede tardar más en aparecer');
+    recommendations.push('🔧 SOLUCIÓN: Aumentar waitForTimeout o usar waitForSelector');
+  }
+  
+  if (error.message.includes('not found') || error.message.includes('No node found')) {
+    recommendations.push('🔍 ELEMENTO NO ENCONTRADO - el selector puede haber cambiado');
+    recommendations.push('🔧 SOLUCIÓN: Verificar selectores alternativos en el análisis');
+  }
+  
+  if (error.message.includes('not visible') || error.message.includes('not clickable')) {
+    recommendations.push('👁️ ELEMENTO NO VISIBLE/CLICKEABLE - puede estar oculto o cubierto');
+    recommendations.push('🔧 SOLUCIÓN: Verificar scroll, overlays o elementos que lo cubran');
+  }
+  
+  // Análisis del contexto de depósito digital
+  if (depositoContext) {
+    if (depositoContext.dropdownButtons.length === 0) {
+      recommendations.push('⚠️ CRÍTICO: No se encontraron botones dropdown en la página');
+      recommendations.push('🔧 SOLUCIÓN: Verificar si la página cambió o si estamos en la sección correcta');
+    } else {
+      recommendations.push(`✅ DISPONIBLES: ${depositoContext.dropdownButtons.length} botones dropdown detectados`);
+      depositoContext.dropdownButtons.forEach((btn: any, i: number) => {
+        recommendations.push(`   ${i + 1}. ${btn.tag}${btn.id ? `#${btn.id}` : ''}${btn.classes ? `.${btn.classes[0]}` : ''} - "${btn.text}"`);
+      });
+    }
+    
+    if (depositoContext.options.length === 0) {
+      recommendations.push('⚠️ CRÍTICO: No se encontraron opciones "Si" - dropdown puede no estar abierto');
+      recommendations.push('🔧 SOLUCIÓN: Verificar que se haga click en dropdown antes de buscar opciones');
+    } else {
+      recommendations.push(`✅ DISPONIBLES: ${depositoContext.options.length} opciones "Si" detectadas`);
+    }
+  }
+  
+  // Análisis general de la página
+  if (analysis.forms.length === 0) {
+    recommendations.push('⚠️ PÁGINA: No se detectaron formularios - posible problema de navegación');
+    recommendations.push('🔧 SOLUCIÓN: Verificar que estemos en la página correcta del trámite');
+  }
+  
+  if (analysis.interactiveElements.buttons.length === 0) {
+    recommendations.push('⚠️ PÁGINA: No se detectaron botones - posible problema de carga');
+    recommendations.push('🔧 SOLUCIÓN: Esperar más tiempo o verificar si la página terminó de cargar');
+  }
+  
+  return recommendations;
+}
+
+// Función para generar soluciones posibles basadas en el fallo
+function generatePossibleSolutions(stepNumber: number, _analysis: PageAnalysis, depositoContext: any, error: Error): string[] {
+  const solutions: string[] = [];
+  
+  // Soluciones específicas por paso
+  if (stepNumber === 13) {
+    solutions.push('SELECTOR ANALYSIS:');
+    if (depositoContext?.dropdownButtons?.length > 0) {
+      depositoContext.dropdownButtons.forEach((btn: any, i: number) => {
+        const selector = btn.id ? `#${btn.id}` : (btn.classes?.length > 0 ? `.${btn.classes[0]}` : btn.tag);
+        solutions.push(`  await page.locator('${selector}').click(); // Botón ${i + 1}: "${btn.text}"`);
+      });
+    }
+    
+    solutions.push('ALTERNATIVE SELECTORS:');
+    solutions.push('  await page.locator(\'button[id$="-btn"]\').first().click();');
+    solutions.push('  await page.locator(\'[role="combobox"]\').click();');
+    solutions.push('  await page.locator(\'div:has-text("depósito") button\').click();');
+  }
+  
+  // Soluciones generales basadas en el tipo de error
+  if (error.message.includes('timeout')) {
+    solutions.push('TIMEOUT SOLUTIONS:');
+    solutions.push('  await page.waitForSelector(\'selector\', { timeout: 60000 });');
+    solutions.push('  await page.waitForLoadState(\'networkidle\');');
+    solutions.push('  await page.waitForTimeout(5000);');
+  }
+  
+  if (error.message.includes('not found')) {
+    solutions.push('ELEMENT NOT FOUND SOLUTIONS:');
+    solutions.push('  // Try waiting for element first');
+    solutions.push('  await page.waitForSelector(\'selector\');');
+    solutions.push('  // Try alternative selectors');
+    solutions.push('  await page.locator(\'alternative-selector\').click();');
+  }
+  
+  if (error.message.includes('not visible')) {
+    solutions.push('VISIBILITY SOLUTIONS:');
+    solutions.push('  await element.scrollIntoViewIfNeeded();');
+    solutions.push('  await page.locator(\'selector\').click({ force: true });');
+    solutions.push('  // Check for overlays or modals blocking the element');
+  }
+  
+  return solutions;
+}
+
+
+export async function analyzePage(page: Page, silent: boolean = false): Promise<PageAnalysis> {
+  if (!silent) {
+    logger.info('Analizando estructura de la página...');
+  }
   
   try {
     const analysis: PageAnalysis = {
@@ -97,11 +500,15 @@ export async function analyzePage(page: Page): Promise<PageAnalysis> {
     const containers = await analyzeContainers(page);
     analysis.containers = containers;
     
-    logger.info(`Análisis completado: ${analysis.containers.length} contenedores, ${analysis.forms.length} formularios encontrados`);
+    if (!silent) {
+      logger.info(`Análisis completado: ${analysis.containers.length} contenedores, ${analysis.forms.length} formularios encontrados`);
+    }
     
     return analysis;
   } catch (error) {
-    logger.error('Error al analizar la página:', error);
+    if (!silent) {
+      logger.error('Error al analizar la página:', error);
+    }
     throw error;
   }
 }

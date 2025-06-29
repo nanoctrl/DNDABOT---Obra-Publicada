@@ -47,19 +47,22 @@ export class TadDashboardPage {
   async searchTramite(tramiteName: string): Promise<void> {
     logger.info(`Buscando trámite: ${tramiteName}`);
     
-    // Search box strategies
-    const searchStrategies = buildStrategies({
-      id: 'search',
-      name: 'search',
-      text: 'Buscar trámite',
-      ariaLabel: 'Buscar',
-      css: 'input[type="search"]'
-    });
-    
-    searchStrategies.push({
-      name: 'Search by placeholder',
-      locator: (page) => page.locator('input[placeholder*="Buscar" i]')
-    });
+    // OPTIMIZED: Successful strategy first based on log analysis
+    const searchStrategies = [
+      // ✅ SUCCESS_STRATEGY: Search by placeholder - put this first
+      {
+        name: 'Search by placeholder',
+        locator: (page: Page) => page.locator('input[placeholder*="Buscar" i]')
+      },
+      // Fallback strategies
+      ...buildStrategies({
+        id: 'search',
+        name: 'search',
+        text: 'Buscar trámite',
+        ariaLabel: 'Buscar',
+        css: 'input[type="search"]'
+      })
+    ];
     
     // Fill search box
     const searchResult = await tryInteraction(

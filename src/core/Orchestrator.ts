@@ -9,11 +9,13 @@ import { AfipAuthService } from '../services/afipAuth.service';
 import { TadRegistrationService } from '../services/tadRegistration.service';
 import { readInputData } from './dataReader';
 import { updateManifest } from './manifestUpdater';
+import { StateManager } from './stateManager';
 import path from 'path';
 import fs from 'fs/promises';
 
 export interface OrchestratorOptions {
   exploratoryMode?: boolean;
+  resumeSessionId?: string;
 }
 
 export class Orchestrator {
@@ -21,6 +23,11 @@ export class Orchestrator {
   private authService?: AfipAuthService;
   private registrationService?: TadRegistrationService;
   private runPath?: string;
+  private stateManager: StateManager;
+
+  constructor() {
+    this.stateManager = StateManager.getInstance();
+  }
 
   async run(options: OrchestratorOptions = {}): Promise<void> {
     const startTime = Date.now();
@@ -48,7 +55,7 @@ export class Orchestrator {
       }
 
       // Normal execution mode
-      await this.runNormalMode();
+      await this.runNormalMode(options.resumeSessionId);
 
     } catch (err) {
       status = 'FAILED';
@@ -71,6 +78,19 @@ export class Orchestrator {
       if (config.DEVELOPER_DEBUG_MODE && this.browserManager?.page && this.runPath) {
         await this.generateFinalStateReport();
       }
+
+      // Export state report
+      if (this.stateManager && this.runPath) {
+        const stateReport = await this.stateManager.exportStateReport();
+        await fs.writeFile(
+          path.join(this.runPath, 'state_report.md'),
+          stateReport,
+          'utf-8'
+        );
+      }
+
+      // Cleanup state manager
+      await this.stateManager.cleanup();
 
       // Close browser
       if (this.browserManager) {
@@ -202,7 +222,7 @@ export class Orchestrator {
     }
   }
 
-  private async runNormalMode(): Promise<void> {
+  private async runNormalMode(resumeSessionId?: string): Promise<void> {
     if (!this.browserManager) throw new Error('Browser not initialized');
     
     const { page } = this.browserManager;
@@ -214,6 +234,19 @@ export class Orchestrator {
     logger.info(`  - Tipo: ${inputData.obra.tipo}`);
     logger.info(`  - Autores: ${inputData.autores.length}`);
     logger.info(`  - Editores: ${inputData.editores?.length || 0}`);
+    
+    // Initialize state manager
+    await this.stateManager.initialize(inputData, resumeSessionId);
+    const state = this.stateManager.getState();
+    logger.info(`📊 Sesión: ${state?.sessionId}`);
+    
+    // Check if resuming
+    if (resumeSessionId) {
+      const nextTask = this.stateManager.getNextPendingTask();
+      if (nextTask) {
+        logger.info(`♻️ Reanudando desde tarea: ${nextTask.taskName}`);
+      }
+    }
     
     // Debug snapshot if enabled
     if (config.DEVELOPER_DEBUG_MODE) {
