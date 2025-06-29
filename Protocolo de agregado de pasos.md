@@ -378,4 +378,171 @@ private async checkProcessStep(): Promise<void> {
 }
 ```
 
+---
+
+## 🚨 CRITICAL INSIGHTS: Dropdown Selection and Page Navigation Issues
+
+### Problem Pattern Recognition
+
+#### 🔍 **False Positive Detection Strategy**
+**Always verify success through screenshots, not just log messages:**
+
+```
+User Feedback: "always, before claiming victory, check the screenshot of the check process step"
+```
+
+**Key Insight**: Logs can show "SUCCESS" while the step actually fails on the wrong page.
+
+**Implementation**: 
+- Always compare BEFORE and AFTER screenshots
+- Check URL/page title in final verification
+- Verify expected page elements are still present
+
+#### ⚠️ **Dropdown Selection Anti-Patterns**
+
+**DANGEROUS PATTERNS (Cause Page Navigation):**
+```typescript
+// ❌ NEVER USE - Matches elements anywhere on page
+await this.page.getByText('Si', { exact: true }).click();
+await this.page.locator('li:has-text("No")').click();
+await this.page.locator('*:visible:has-text("Si")').click();
+```
+
+**ROOT CAUSE**: These selectors can match navigation elements, headers, or links that cause unintended page navigation.
+
+**SAFE PATTERNS (Dropdown-Only Selection):**
+```typescript
+// ✅ ALWAYS USE - Restricts to dropdown containers only
+const dropdownOptions = [
+  '.z-combobox-pp:visible .z-comboitem:has-text("${option}")',
+  '.z-combobox-pp:visible td:has-text("${option}")', 
+  '.z-dropdown:visible .z-comboitem:has-text("${option}")',
+  '.z-popup:visible *:has-text("${option}")'
+];
+```
+
+#### 🎯 **Progressive Selector Restriction Strategy**
+
+1. **Level 1**: Framework-specific containers (`.z-combobox-pp`, `.z-dropdown`)
+2. **Level 2**: Visibility constraints (`:visible`) 
+3. **Level 3**: Content targeting (`:has-text()`)
+4. **Level 4**: Element type restriction (`td`, `.z-comboitem`)
+
+**Formula**: `[CONTAINER]:visible [ELEMENT_TYPE]:has-text("${text}")`
+
+#### 🔄 **Debugging Workflow for Dropdown Issues**
+
+**Step 1: Identify Symptoms**
+- Logs show "SUCCESS" but wrong page in final verification
+- Before/after screenshots show different pages
+- URL changes unexpectedly
+
+**Step 2: Locate Broad Selectors**
+```bash
+# Search for problematic patterns
+grep -r "getByText.*click" src/
+grep -r "\*:visible:has-text" src/
+grep -r "li:has-text" src/
+```
+
+**Step 3: Apply Container Restrictions**
+- Replace broad selectors with container-specific ones
+- Add `:visible` constraints
+- Test with ultra-restrictive selectors first
+
+**Step 4: Verification Strategy**
+```typescript
+// Always verify dropdown closed after selection
+const stillOpen = await this.page.locator('.z-combobox-pp:visible, .z-dropdown:visible').count();
+if (stillOpen === 0) {
+  this.logger.info('✅ VERIFIED SUCCESS: Selected and dropdown closed');
+  return;
+}
+```
+
+#### 📋 **ZK Framework Dropdown Architecture**
+
+**Understanding ZK Dropdown Structure:**
+```html
+<!-- Trigger Button -->
+<input class="z-combobox-inp" onclick="...">
+<i class="z-combobox-btn"></i>
+
+<!-- Popup Container (when open) -->
+<div class="z-combobox-pp z-popup">
+  <div class="z-comboitem">Option 1</div>
+  <div class="z-comboitem">Option 2</div>
+  <td class="z-comboitem-text">Option 3</td>
+</div>
+```
+
+**Targeting Strategy:**
+1. **Never target trigger elements for selection** - only for opening
+2. **Always target within popup containers** - `.z-combobox-pp`, `.z-popup`
+3. **Use specific item selectors** - `.z-comboitem`, `td.z-comboitem-text`
+
+#### 🛠️ **Implementation Template for New Dropdown Steps**
+
+```typescript
+// TEMPLATE: Safe dropdown interaction
+async selectFromDropdown(containerText: string, optionText: string): Promise<void> {
+  // 1. Locate and click dropdown trigger (near container text)
+  const triggerSelector = `text="${containerText}" + [role="combobox"], text="${containerText}" + .z-combobox-btn`;
+  await this.page.locator(triggerSelector).click();
+  
+  // 2. Wait for dropdown to open
+  await this.page.waitForTimeout(500);
+  
+  // 3. Select from ONLY visible dropdown containers
+  const dropdownSelectors = [
+    `.z-combobox-pp:visible .z-comboitem:has-text("${optionText}")`,
+    `.z-combobox-pp:visible td:has-text("${optionText}")`,
+    `.z-dropdown:visible .z-comboitem:has-text("${optionText}")`,
+    `.z-popup:visible *:has-text("${optionText}")`
+  ];
+  
+  for (const selector of dropdownSelectors) {
+    const option = this.page.locator(selector).first();
+    if (await option.count() > 0 && await option.isVisible()) {
+      await option.click();
+      
+      // 4. Verify dropdown closed (success confirmation)
+      const stillOpen = await this.page.locator('.z-combobox-pp:visible').count();
+      if (stillOpen === 0) {
+        this.logger.info(`✅ VERIFIED: Selected "${optionText}" and dropdown closed`);
+        return;
+      }
+    }
+  }
+  
+  throw new Error(`Could not select "${optionText}" from dropdown`);
+}
+```
+
+#### 🎯 **Key Learning: Container-First Approach**
+
+**OLD APPROACH**: Find text, then click
+```typescript
+await this.page.getByText('No').click(); // ❌ Could be anywhere
+```
+
+**NEW APPROACH**: Find container, then find text within container
+```typescript
+const container = this.page.locator('.z-combobox-pp:visible');
+const option = container.locator('*:has-text("No")').first();
+await option.click(); // ✅ Only within dropdown
+```
+
+#### 💡 **Prevention Checklist for Future Steps**
+
+- [ ] **Never use page-wide text selectors for clicking**
+- [ ] **Always scope selectors to specific containers**
+- [ ] **Add `:visible` constraints to prevent stale element matches**
+- [ ] **Verify dropdown state changes after interaction**
+- [ ] **Compare before/after screenshots for navigation detection**
+- [ ] **Use Check Process Step for final verification**
+- [ ] **Test with broad selectors disabled first**
+
+This experience taught us that **specificity and container scoping are critical** for preventing unintended page navigation in complex web applications with multiple elements containing similar text.
+
 Esta documentación asegura que el Check Process Step se implemente consistentemente y proporcione toda la información necesaria para verificar el éxito del proceso completo.

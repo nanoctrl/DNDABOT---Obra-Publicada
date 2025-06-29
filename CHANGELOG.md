@@ -5,6 +5,55 @@ Todos los cambios notables en este proyecto serán documentados en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/),
 y este proyecto adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.3] - 2025-06-29
+
+### Fixed - Critical Dropdown Selection Navigation Issue
+
+#### Issue Description
+- **Problem**: Step 28 (Web Publication dropdown) was causing unintended page navigation to Notifications page
+- **Symptom**: Dropdown opened correctly, but selecting "Si"/"No" options clicked wrong elements, causing navigation away from form
+- **Impact**: Step 28 appeared successful in logs but executed on wrong page, making form completion impossible
+- **Root Cause**: Overly broad selectors (`li:has-text("No")`, `*:visible:has-text("Si")`) matched navigation elements instead of dropdown options
+
+#### Solution Implementation
+**Ultra-Restrictive Dropdown Selection Strategy:**
+1. **Removed Broad Selectors**: Eliminated `li:has-text()` and `*:visible:has-text()` that could match page-wide elements
+2. **Container-Specific Targeting**: Restricted all selectors to visible dropdown popup containers only
+3. **ZK Framework Precision**: Used ZK-specific popup containers (`.z-combobox-pp:visible`, `.z-dropdown:visible`, `.z-popup:visible`)
+
+```typescript
+// BEFORE: Problematic broad selectors
+const zkComboOptions = [
+  `li:has-text("${opcionASeleccionar}")`,  // Could match navigation!
+  `*:visible:has-text("${opcionASeleccionar}")` // Page-wide search!
+];
+
+// AFTER: Ultra-restrictive popup-only selectors  
+const zkComboOptions = [
+  `.z-combobox-pp:visible .z-comboitem:has-text("${opcionASeleccionar}")`,
+  `.z-combobox-pp:visible td:has-text("${opcionASeleccionar}")`,
+  `.z-dropdown:visible .z-comboitem:has-text("${opcionASeleccionar}")`,
+  `.z-popup:visible *:has-text("${opcionASeleccionar}")`
+];
+```
+
+#### Files Modified
+- `src/pages/ObraForm.page.ts`: Fixed dropdown selection logic in `seleccionarPublicacionWeb()` method
+- Applied fix to all fallback selection strategies within SUCCESS_STRATEGY
+
+#### Validation Method
+- **Screenshot Verification**: Before/after screenshots confirm Step 28 now stays on form page
+- **Step 29 Verification**: Final verification now executes on correct page instead of Notifications page
+- **Log Analysis**: "VERIFIED SUCCESS: Selected and dropdown closed" confirms proper dropdown interaction
+
+#### Impact
+- ✅ Step 28 now correctly selects from actual dropdown options
+- ✅ Form page navigation preserved throughout process
+- ✅ All 29 steps can now complete successfully on correct pages
+- ✅ False positive prevention through dropdown closure verification
+
+---
+
 ## [2.4.2] - 2025-06-29
 
 ### Fixed - Step Numbering and Tracking System Correction
