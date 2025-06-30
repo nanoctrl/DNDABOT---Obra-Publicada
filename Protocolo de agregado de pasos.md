@@ -1,4 +1,96 @@
 🔄 PROTOCOLO 1: "Capture & Analyze" (Captura y Análisis Preventivo)
+
+## 🚨 REGLA FUNDAMENTAL: PRESERVACIÓN DE PASOS EXISTENTES
+
+### ⚠️ **NUNCA MODIFICAR PASOS PREVIAMENTE IMPLEMENTADOS**
+
+**REGLA ABSOLUTA**: Al agregar nuevos pasos, el bot **JAMÁS** debe modificar, alterar, o "mejorar" pasos que ya funcionan correctamente.
+
+#### 🛡️ **Principios de Preservación:**
+
+1. **"If it ain't broke, don't fix it"** - Si un paso funciona, no lo toques
+2. **"New additions only"** - Solo agregar código nuevo, nunca modificar existente
+3. **"Backward compatibility required"** - Mantener compatibilidad total con pasos anteriores
+4. **"Test existing steps first"** - Siempre verificar que pasos existentes siguen funcionando
+
+#### 🚫 **PROHIBIDO ABSOLUTAMENTE:**
+
+```typescript
+// ❌ NUNCA HACER - Modificar paso existente
+private async completarTituloObra_STEP_19(): Promise<void> {
+  // NUNCA cambiar la lógica de pasos que ya funcionan
+  // NUNCA "mejorar" selectores que ya están funcionando
+  // NUNCA refactorizar métodos de pasos completados
+}
+
+// ❌ NUNCA HACER - Cambiar configuración de pasos existentes
+export const STEP_DEFINITIONS = [
+  {
+    number: 19,
+    name: 'completar_titulo_obra',
+    description: 'Completar título de la obra', // NUNCA cambiar
+    service: 'obra',
+    required: true // NUNCA cambiar
+  }
+];
+```
+
+#### ✅ **PERMITIDO ÚNICAMENTE:**
+
+```typescript
+// ✅ CORRECTO - Solo agregar nuevos pasos
+export const STEP_DEFINITIONS = [
+  // ... pasos existentes SIN MODIFICAR ...
+  {
+    number: 30, // NUEVO PASO solamente
+    name: 'nuevo_paso_30',
+    description: 'Descripción del nuevo paso',
+    service: 'obra',
+    required: true
+  }
+];
+
+// ✅ CORRECTO - Solo agregar nuevos métodos
+private async nuevoMetodoPaso30(): Promise<void> {
+  // Implementación completamente nueva
+  // Sin tocar métodos existentes
+}
+```
+
+#### 📋 **Checklist de Verificación Antes de Cada Commit:**
+
+- [ ] **¿Modifiqué algún paso existente?** → Si la respuesta es SÍ, REVERTAR
+- [ ] **¿Cambié selectores que ya funcionaban?** → Si la respuesta es SÍ, REVERTAR  
+- [ ] **¿Refactoricé métodos de pasos completados?** → Si la respuesta es SÍ, REVERTAR
+- [ ] **¿Solo agregué código nuevo?** → Debe ser SÍ para proceder
+- [ ] **¿Los pasos 1-29 siguen funcionando igual?** → Debe ser SÍ para proceder
+
+#### 🎯 **Razones de Esta Regla:**
+
+1. **Estabilidad**: Pasos que funcionan representan valor de negocio comprobado
+2. **Predictibilidad**: El bot debe comportarse consistentemente
+3. **Debugging**: Cambios innecesarios introducen bugs nuevos
+4. **Confianza**: Los usuarios confían en que el proceso funcione igual siempre
+5. **Mantenimiento**: Cada cambio requiere re-testing de todo el flujo
+
+#### 🔍 **Excepciones Críticas (Requieren Aprobación Explícita):**
+
+**Solo en estos casos se puede modificar un paso existente:**
+
+1. **Bug crítico que impide el funcionamiento** (con evidencia de fallo)
+2. **Cambio en la interfaz del sitio web** (TAD/AFIP cambió su código)
+3. **Seguridad crítica** (credenciales expuestas o vulnerabilidad)
+
+**Proceso para excepciones:**
+1. Documentar el problema específico
+2. Explicar por qué NO se puede resolver agregando código nuevo
+3. Mostrar evidencia del fallo (screenshots, logs)
+4. Obtener aprobación explícita antes de modificar
+5. Hacer el cambio mínimo posible
+6. Verificar que todos los demás pasos siguen funcionando
+
+---
+
 Filosofía
 Este protocolo se basa en la idea de que el bot, al completar exitosamente el último paso implementado, debe comportarse como si fuera a fallar el siguiente paso inexistente, capturando toda la información posible del estado actual de la página para facilitar el desarrollo del próximo paso.
 Flujo del Protocolo

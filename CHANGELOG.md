@@ -5,6 +5,154 @@ Todos los cambios notables en este proyecto serán documentados en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/),
 y este proyecto adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.5] - 2025-06-30
+
+### Added - Step 29: Publication Data Entry System
+
+#### Context
+- **Current State**: Bot completed form up to step 28 (publication type selection)
+- **Business Need**: Automatically fill publication data textbox that appears after publication type selection
+- **User Request**: Add new step 29 to insert URL (web) or location (physical) publication data
+
+#### Implementation
+
+**New Step 29 Features:**
+```typescript
+// Intelligent Publication Data Entry
+✅ Conditional Logic: Detects esPublicacionWeb flag automatically
+✅ Web Publications: Inserts urlPaginaWeb into "URL de la página web" textbox
+✅ Physical Publications: Inserts lugar_publicacion into "Lugar de publicación" textbox
+✅ Smart Timing: Waits 1 second after step 28 for textbox to appear
+✅ Robust Selectors: Multiple fallback strategies for finding textbox
+```
+
+**Step Configuration Changes:**
+- **Added Step 29**: "Insertar datos de publicación (URL o lugar según tipo)"
+- **Moved Check Process**: Previous step 29 → step 30
+- **Updated TOTAL_STEPS**: 29 → 30 steps
+
+#### Technical Details
+
+**Files Modified:**
+- `src/config/steps.config.ts`: Added step 29 definition, renumbered check process
+- `src/services/tadRegistration.service.ts`: Implemented `insertarDatosPublicacion` method
+- Step tracker integration with proper error handling and logging
+
+**Key Implementation Features:**
+```typescript
+// Multi-strategy textbox detection
+Strategy 1: Find input in same table row as label
+Strategy 2: Find input by navigating from label parent  
+Strategy 3: Find input near label text
+Strategy 4: Fallback to specific publication area inputs
+
+// Smart conditional insertion
+if (obra.esPublicacionWeb) {
+  datosParaInsertar = obra.urlPaginaWeb;
+  labelEsperado = 'URL de la página web';
+} else {
+  datosParaInsertar = obra.lugar_publicacion;
+  labelEsperado = 'Lugar de publicación';
+}
+```
+
+#### Testing Results
+- ✅ **Web Publication Test**: Successfully inserted URL into "URL de la página web" textbox
+- ✅ **Physical Publication Test**: Successfully inserted location into "Lugar de publicación" textbox
+- ✅ **Error Resilience**: Multiple selector strategies prevent single point of failure
+- ✅ **Step Integration**: Proper step tracking and milestone screenshots
+
+---
+
+## [2.4.4] - 2025-06-30
+
+### Enhanced - JSON and Zod Schema Update for Publication Types
+
+#### Context
+- **Current State**: Schema required both `lugar_publicacion` and `urlPaginaWeb` always
+- **Business Need**: Different validation requirements for web vs physical publications
+- **User Request**: Update schema to properly handle conditional field requirements
+
+#### Implementation
+
+**Updated Validation Logic:**
+```typescript
+// Web Publication (esPublicacionWeb: true)
+✅ urlPaginaWeb: REQUIRED - must be valid URL
+✅ lugar_publicacion: OPTIONAL - can be present or absent
+
+// Physical Publication (esPublicacionWeb: false)  
+✅ lugar_publicacion: REQUIRED - must be present
+✅ urlPaginaWeb: OPTIONAL - can be present or absent
+```
+
+**Schema Changes:**
+- **Both fields now optional in base schema** - validation moved to `superRefine`
+- **Conditional validation** - requirements depend on `esPublicacionWeb` value
+- **Improved error messages** - specific to publication type
+- **Unified structure** - both cases use same interface
+
+#### Technical Details
+
+**Files Modified:**
+- `src/types/schema.ts`: Updated `ObraSchema` with conditional validation
+- `data/tramite_ejemplo.json`: Updated to demonstrate web publication structure
+- `data/tramite_ejemplo_fisico.json`: Created example for physical publication
+
+**Key Schema Changes:**
+```typescript
+// BEFORE: Both always required
+lugar_publicacion: z.string().min(1, 'Required'),
+urlPaginaWeb: z.string().url().optional(),
+
+// AFTER: Conditional validation
+lugar_publicacion: z.string().optional(),
+urlPaginaWeb: z.string().optional(),
+}).superRefine((data, ctx) => {
+  if (data.esPublicacionWeb) {
+    // Validate urlPaginaWeb is required and valid URL
+  } else {
+    // Validate lugar_publicacion is required
+  }
+});
+```
+
+#### Validation Examples
+
+**Valid Web Publication:**
+```json
+{
+  "esPublicacionWeb": true,
+  "urlPaginaWeb": "https://music.example.com/cancion",
+  "lugar_publicacion": "Buenos Aires" // Optional
+}
+```
+
+**Valid Physical Publication:**
+```json
+{
+  "esPublicacionWeb": false,
+  "lugar_publicacion": "Ciudad Autónoma de Buenos Aires", // Required
+  "urlPaginaWeb": "https://optional.com" // Optional
+}
+```
+
+#### Validation Testing
+- ✅ Web publication with URL validates successfully
+- ✅ Physical publication with location validates successfully  
+- ✅ Web publication without URL properly rejected
+- ✅ Physical publication without location properly rejected
+- ✅ Both cases support optional fields correctly
+
+#### Impact
+- 🎯 **Flexible Data Structure**: Supports both publication types seamlessly
+- 🛡️ **Proper Validation**: Enforces business rules conditionally
+- 📊 **Better UX**: Clear error messages for each case
+- 🔄 **Backward Compatible**: Existing valid data continues to work
+- 📚 **Examples Provided**: Both publication types documented with examples
+
+---
+
 ## [2.4.3] - 2025-06-29
 
 ### Fixed - Critical Dropdown Selection Navigation Issue

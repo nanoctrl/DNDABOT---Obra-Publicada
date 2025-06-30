@@ -248,6 +248,14 @@ export const STEP_DEFINITIONS: StepDefinition[] = [
   },
   {
     number: 29,
+    name: 'insertar_datos_publicacion',
+    description: 'Insertar datos de publicación (URL o lugar según tipo)',
+    service: 'obra',
+    required: true,
+    retryable: false
+  },
+  {
+    number: 30,
     name: 'check_process_step',
     description: 'Verificar proceso completado exitosamente',
     service: 'obra',

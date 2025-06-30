@@ -584,7 +584,16 @@ export class TadRegistrationService {
       }
     );
 
-    // Paso 29: Check Process Step - Verificar proceso completado exitosamente
+    // Paso 29: Insertar datos de publicación (URL o lugar según tipo)
+    await executeWithInteractiveSupport(
+      this.page,
+      'Insertar datos de publicación (URL o lugar según tipo)',
+      async () => {
+        await this.insertarDatosPublicacion(tramiteData.obra);
+      }
+    );
+
+    // Paso 30: Check Process Step - Verificar proceso completado exitosamente
     await executeWithInteractiveSupport(
       this.page,
       'Verificar proceso completado exitosamente',
@@ -642,14 +651,104 @@ export class TadRegistrationService {
   }
 
   /**
-   * Paso 29: Check Process Step - Verificar proceso completado exitosamente
+   * Paso 29: Insertar datos de publicación (URL o lugar según tipo)
+   */
+  private async insertarDatosPublicacion(obra: any): Promise<void> {
+    this.logger.info('📝 PASO 29: Insertando datos de publicación...');
+    const stepTracker = getStepTracker();
+    stepTracker.startStep(29);
+    
+    try {
+      // Esperar 1 segundo para que aparezca el textbox después del paso 28
+      await this.page.waitForTimeout(1000);
+      
+      let datosParaInsertar: string;
+      let labelEsperado: string;
+      
+      if (obra.esPublicacionWeb) {
+        datosParaInsertar = obra.urlPaginaWeb;
+        labelEsperado = 'URL de la página web';
+        this.logger.info(`🌐 Publicación web detectada - insertando URL: ${datosParaInsertar}`);
+      } else {
+        datosParaInsertar = obra.lugar_publicacion;
+        labelEsperado = 'Lugar de publicación';
+        this.logger.info(`📍 Publicación física detectada - insertando lugar: ${datosParaInsertar}`);
+      }
+      
+      // Buscar el textbox por el label correspondiente usando múltiples estrategias
+      let textbox;
+      let success = false;
+      
+      // Estrategia 1: Buscar input en la misma fila que contiene el label
+      try {
+        textbox = this.page.locator(`tr:has-text("${labelEsperado}")`)
+          .locator('input[type="text"]');
+        await textbox.waitFor({ state: 'visible', timeout: 3000 });
+        this.logger.info(`🎯 Textbox encontrado con estrategia 1 (por fila): ${labelEsperado}`);
+        success = true;
+      } catch (error1) {
+        this.logger.warn(`⚠️ Estrategia 1 falló: ${error1}`);
+        
+        // Estrategia 2: Buscar por label y luego buscar input cerca
+        try {
+          textbox = this.page.locator(`text="${labelEsperado}"`).locator('..').locator('input[type="text"]');
+          await textbox.waitFor({ state: 'visible', timeout: 3000 });
+          this.logger.info(`🎯 Textbox encontrado con estrategia 2 (por label parent): ${labelEsperado}`);
+          success = true;
+        } catch (error2) {
+          this.logger.warn(`⚠️ Estrategia 2 falló: ${error2}`);
+          
+          // Estrategia 3: Buscar input cerca del texto del label usando locator near
+          try {
+            const labelElement = this.page.locator(`text="${labelEsperado}"`);
+            await labelElement.waitFor({ state: 'visible', timeout: 3000 });
+            textbox = this.page.locator('input[type="text"]').locator(':near(text="' + labelEsperado + '")');
+            await textbox.waitFor({ state: 'visible', timeout: 3000 });
+            this.logger.info(`🎯 Textbox encontrado con estrategia 3 (near label): ${labelEsperado}`);
+            success = true;
+          } catch (error3) {
+            this.logger.warn(`⚠️ Estrategia 3 falló: ${error3}`);
+            
+            // Estrategia 4: Buscar cualquier input en el formulario de obra (fallback)
+            try {
+              // Buscar inputs vacios en el area del formulario de obra
+              textbox = this.page.locator('tr:has-text("Lugar de Publicación"), tr:has-text("URL de la página web")').locator('input[type="text"]').first();
+              await textbox.waitFor({ state: 'visible', timeout: 3000 });
+              this.logger.info(`🎯 Textbox encontrado con estrategia 4 (fallback por area): ${labelEsperado}`);
+              success = true;
+            } catch (error4) {
+              this.logger.error(`❌ Todas las estrategias fallaron para encontrar el textbox: ${labelEsperado}`);
+              throw new Error(`No se pudo encontrar el textbox para "${labelEsperado}"`);
+            }
+          }
+        }
+      }
+      
+      if (success) {
+        // Limpiar el campo e insertar los datos
+        await textbox.clear();
+        await textbox.fill(datosParaInsertar);
+      }
+      
+      this.logger.info(`✅ Datos insertados correctamente en "${labelEsperado}": ${datosParaInsertar}`);
+      stepTracker.logSuccess(29, `Datos de publicación insertados: ${labelEsperado} = ${datosParaInsertar}`);
+      
+    } catch (error) {
+      this.logger.error('❌ Error al insertar datos de publicación:', error);
+      stepTracker.logError(29, `Error al insertar datos de publicación: ${error}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Paso 30: Check Process Step - Verificar proceso completado exitosamente
    * Este paso analiza la página con todas las estrategias disponibles para verificar el estado final
    * y mantiene el navegador abierto por 5 segundos para inspección visual
    */
   private async checkProcessStep(): Promise<void> {
-    this.logger.info('🔍 PASO 29: Verificando proceso completado exitosamente...');
+    this.logger.info('🔍 PASO 30: Verificando proceso completado exitosamente...');
     const stepTracker = getStepTracker();
-    stepTracker.startStep(29);
+    stepTracker.startStep(30);
     
     try {
       // Tomar screenshot del estado final
@@ -703,8 +802,8 @@ export class TadRegistrationService {
       await new Promise(resolve => setTimeout(resolve, 5000));
       this.logger.info('✅ Período de verificación visual completado');
       
-      stepTracker.logSuccess(29, 'Proceso verificado exitosamente con análisis completo');
-      this.logger.info('✅ PASO 29 COMPLETADO - Check Process Step ejecutado exitosamente');
+      stepTracker.logSuccess(30, 'Proceso verificado exitosamente con análisis completo');
+      this.logger.info('✅ PASO 30 COMPLETADO - Check Process Step ejecutado exitosamente');
       
     } catch (error) {
       this.logger.error('Error en Check Process Step:', error);

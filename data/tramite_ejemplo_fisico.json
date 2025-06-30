@@ -1,20 +1,19 @@
 {
   "obra": {
-    "titulo": "Cancion Digital",
+    "titulo": "Cancion Fisica",
     "tipo": "Música y letra",
-    "album": true,
-    "cantidad_ejemplares": 1000,
-    "genero_musical": "Pop",
-    "esPublicacionWeb": true,
-    "urlPaginaWeb": "https://music.example.com/cancion-digital",
+    "album": false,
+    "cantidad_ejemplares": 500,
+    "genero_musical": "Rock",
+    "esPublicacionWeb": false,
     "lugar_publicacion": "Ciudad Autónoma de Buenos Aires",
-    "fecha_publicacion": "15-02-2025"
+    "fecha_publicacion": "10-03-2025"
   },
   "autores": [
     {
-      "nombre": { "primerNombre": "Pedro" },
-      "apellido": { "primerApellido": "Sanchez" },
-      "fiscalId": { "tipo": "CUIT", "numero": "20-11111111-1" },
+      "nombre": { "primerNombre": "Ana" },
+      "apellido": { "primerApellido": "Rodriguez" },
+      "fiscalId": { "tipo": "CUIT", "numero": "27-22222222-2" },
       "nacionalidad": "Argentina",
       "rol": "Música y Letra"
     }
@@ -26,7 +25,7 @@
       "cuit": "33-70957838-9",
       "email": "mgonzalez@epsapublishing.com.ar",
       "telefono": "15 5454 4444",
-      "porcentajeTitularidad": 5,
+      "porcentajeTitularidad": 100,
       "domicilio": {
         "calleYNumero": "Vera 410", 
         "piso": "5", 

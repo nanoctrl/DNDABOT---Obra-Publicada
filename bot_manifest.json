@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "status": "READY",
   "lastRun": {
-    "timestamp": "2025-06-29T23:05:17.830Z",
+    "timestamp": "2025-06-30T14:31:30.379Z",
     "status": "SUCCESS",
     "summary": "Bot execution completed successfully",
-    "duration": 92051,
-    "runArtifactsPath": "/Users/nahuelmaeso/Desktop/DemoJupiter/CLAUDE.BOTDNDA/registro-obras-bot/output/runs/run_2025-06-29T23-03-45-780Z"
+    "duration": 92257,
+    "runArtifactsPath": "/Users/nahuelmaeso/Desktop/DemoJupiter/CLAUDE.BOTDNDA/registro-obras-bot/output/runs/run_2025-06-30T14-29-58-121Z"
   },
   "testSummary": {
     "passed": 0,

@@ -5,16 +5,26 @@ import { z } from 'zod';
  * 
  * Lógica de validación para lugar_publicacion y urlPaginaWeb:
  * 
- * 1. lugar_publicacion: SIEMPRE requerido (independiente del tipo de publicación)
- *    - Se usa en el formulario SOLO si esPublicacionWeb = false
- *    - Si esPublicacionWeb = true, el campo existe pero no se usa en el formulario
+ * AMBOS CAMPOS SIEMPRE PRESENTES EN LA ESTRUCTURA:
  * 
- * 2. urlPaginaWeb: Condicional según esPublicacionWeb
+ * 1. lugar_publicacion: Requerido SOLO para publicaciones físicas
+ *    - Si esPublicacionWeb = false: OBLIGATORIO y usado en el formulario
+ *    - Si esPublicacionWeb = true: OPCIONAL (puede estar presente o no)
+ * 
+ * 2. urlPaginaWeb: Requerido SOLO para publicaciones web
  *    - Si esPublicacionWeb = true: OBLIGATORIO y debe ser URL válida
- *    - Si esPublicacionWeb = false: OPCIONAL (puede estar undefined o vacío)
+ *    - Si esPublicacionWeb = false: OPCIONAL (puede estar presente o no)
  * 
- * Esta lógica permite que ambos campos estén presentes en los datos,
- * pero su validación y uso depende del contexto de la publicación.
+ * CASOS DE USO:
+ * - Web Publication (esPublicacionWeb: true):
+ *   ✅ urlPaginaWeb: "https://music.example.com/cancion" (REQUERIDO y usado en formulario)
+ *   ✅ lugar_publicacion: "Ciudad Autónoma de Buenos Aires" (OPCIONAL - puede estar presente o no)
+ * 
+ * - Physical Publication (esPublicacionWeb: false):
+ *   ✅ lugar_publicacion: "Ciudad Autónoma de Buenos Aires" (REQUERIDO y usado en formulario)
+ *   ✅ urlPaginaWeb: undefined | "" | null (OPCIONAL - puede estar presente o no)
+ * 
+ * Esta estructura unificada permite manejar ambos casos con una sola interface.
  */
 export const ObraSchema = z.object({
   titulo: z.string().min(1, 'El título es requerido'),
@@ -23,27 +33,51 @@ export const ObraSchema = z.object({
   cantidad_ejemplares: z.number().int().positive(),
   genero_musical: z.string().min(1, 'El género musical es requerido'),
   esPublicacionWeb: z.boolean(),
-  urlPaginaWeb: z.string().url().optional(),
-  lugar_publicacion: z.string().min(1, 'El lugar de publicación es requerido'),
+  // AMBOS CAMPOS OPCIONALES EN SCHEMA - VALIDACIÓN CONDICIONAL EN REFINE
+  lugar_publicacion: z.string().optional(), // Requerido solo si esPublicacionWeb = false
+  urlPaginaWeb: z.string().optional(), // Requerido solo si esPublicacionWeb = true
   fecha_publicacion: z.string().regex(/^\d{2}-\d{2}-\d{4}$/, 'El formato debe ser DD-MM-AAAA'),
   numero_internacional: z.string().optional()
-}).refine(
-  (data) => {
-    // Lógica de validación condicional:
-    // - Si esPublicacionWeb = true: DEBE tener urlPaginaWeb válida
-    // - Si esPublicacionWeb = false: NO requiere urlPaginaWeb (puede estar vacía)
-    // - lugar_publicacion es SIEMPRE requerido (independiente del tipo de publicación)
-    if (data.esPublicacionWeb) {
-      return !!data.urlPaginaWeb && data.urlPaginaWeb.trim().length > 0;
+}).superRefine((data, ctx) => {
+  // VALIDACIÓN CONDICIONAL COMPLETA:
+  
+  if (data.esPublicacionWeb) {
+    // CASO: Web Publication (esPublicacionWeb = true)
+    // ✅ urlPaginaWeb: REQUERIDO y debe ser URL válida
+    // ✅ lugar_publicacion: OPCIONAL
+    
+    if (!data.urlPaginaWeb || data.urlPaginaWeb.trim().length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Para publicaciones web es obligatorio incluir una URL válida en urlPaginaWeb',
+        path: ['urlPaginaWeb']
+      });
+    } else {
+      // Validar que sea una URL válida
+      try {
+        new URL(data.urlPaginaWeb);
+      } catch {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'urlPaginaWeb debe ser una URL válida (ej: https://music.example.com/cancion)',
+          path: ['urlPaginaWeb']
+        });
+      }
     }
-    // Si no es publicación web, no validamos urlPaginaWeb
-    return true;
-  },
-  {
-    message: 'Para publicaciones web es obligatorio incluir una URL válida en urlPaginaWeb',
-    path: ['urlPaginaWeb'] // Indica que el error se refiere a este campo
+  } else {
+    // CASO: Physical Publication (esPublicacionWeb = false)
+    // ✅ lugar_publicacion: REQUERIDO
+    // ✅ urlPaginaWeb: OPCIONAL
+    
+    if (!data.lugar_publicacion || data.lugar_publicacion.trim().length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Para publicaciones físicas es obligatorio incluir el lugar de publicación',
+        path: ['lugar_publicacion']
+      });
+    }
   }
-);
+});
 
 // Schema for names
 const NombreSchema = z.object({
