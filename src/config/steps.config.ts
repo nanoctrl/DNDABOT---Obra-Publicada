@@ -256,6 +256,22 @@ export const STEP_DEFINITIONS: StepDefinition[] = [
   },
   {
     number: 30,
+    name: 'seleccionar_cantidad_autores',
+    description: 'Seleccionar cantidad de autores (agregar formularios según JSON)',
+    service: 'obra',
+    required: true,
+    retryable: true
+  },
+  {
+    number: 31,
+    name: 'insertar_datos_autores',
+    description: 'Insertar datos de autores en formularios',
+    service: 'obra',
+    required: true,
+    retryable: false
+  },
+  {
+    number: 32,
     name: 'check_process_step',
     description: 'Verificar proceso completado exitosamente',
     service: 'obra',

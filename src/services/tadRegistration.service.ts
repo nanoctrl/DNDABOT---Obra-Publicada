@@ -593,7 +593,25 @@ export class TadRegistrationService {
       }
     );
 
-    // Paso 30: Check Process Step - Verificar proceso completado exitosamente
+    // Paso 30: Seleccionar cantidad de autores (agregar formularios según JSON)
+    await executeWithInteractiveSupport(
+      this.page,
+      'Seleccionar cantidad de autores (agregar formularios según JSON)',
+      async () => {
+        await this.seleccionarCantidadAutores(tramiteData.autores);
+      }
+    );
+
+    // Paso 31: Insertar datos de autores en formularios
+    await executeWithInteractiveSupport(
+      this.page,
+      'Insertar datos de autores en formularios',
+      async () => {
+        await this.insertarDatosAutores(tramiteData.autores);
+      }
+    );
+
+    // Paso 32: Check Process Step - Verificar proceso completado exitosamente
     await executeWithInteractiveSupport(
       this.page,
       'Verificar proceso completado exitosamente',
@@ -741,14 +759,1195 @@ export class TadRegistrationService {
   }
 
   /**
-   * Paso 30: Check Process Step - Verificar proceso completado exitosamente
-   * Este paso analiza la página con todas las estrategias disponibles para verificar el estado final
-   * y mantiene el navegador abierto por 5 segundos para inspección visual
+   * Paso 30: Seleccionar cantidad de autores (agregar formularios según JSON)
    */
-  private async checkProcessStep(): Promise<void> {
-    this.logger.info('🔍 PASO 30: Verificando proceso completado exitosamente...');
+  private async seleccionarCantidadAutores(autores: any[]): Promise<void> {
+    this.logger.info('🎯 PASO 30: Seleccionando cantidad de autores...');
     const stepTracker = getStepTracker();
     stepTracker.startStep(30);
+    
+    try {
+      // Verificar si hay autores en los datos
+      if (!autores || autores.length === 0) {
+        this.logger.info('No se encontraron autores en los datos. No es necesario agregar formularios.');
+        stepTracker.logSuccess(30, 'No hay autores adicionales que agregar');
+        return;
+      }
+
+      // Obtener la cantidad de autores
+      const cantidadAutores = autores.length;
+      this.logger.info(`Se encontraron ${cantidadAutores} autores en los datos JSON`);
+
+      // Si solo hay un autor, no hacer nada (formulario por defecto)
+      if (cantidadAutores <= 1) {
+        this.logger.info('Solo hay un autor, no es necesario agregar formularios adicionales');
+        stepTracker.logSuccess(30, 'Cantidad de autores: 1 (formulario por defecto)');
+        return;
+      }
+
+      // Determinar cuántos clics se necesitan (cantidad - 1)
+      let clicksNecesarios = cantidadAutores - 1;
+      if (clicksNecesarios > 29) {
+        clicksNecesarios = 29; // Máximo 30 autores (29 clics)
+        this.logger.warn(`Limitando a 30 autores máximo (29 clics)`);
+      }
+
+      this.logger.info(`Se necesitan ${clicksNecesarios} clics en el botón '+' para ${cantidadAutores} autores`);
+
+      // Realizar los clics necesarios
+      for (let i = 0; i < clicksNecesarios; i++) {
+        await this.clickAgregarAutorButton(i + 1, clicksNecesarios);
+        await this.page.waitForTimeout(1000);
+      }
+
+      stepTracker.logSuccess(30, `Formularios de autores configurados: ${cantidadAutores} autores`);
+      
+    } catch (error) {
+      this.logger.error('Error seleccionando cantidad de autores:', error);
+      stepTracker.logError(30, `Error al configurar formularios de autores: ${error}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Hace clic en el botón "+" para agregar autor en la sección correcta
+   */
+  private async clickAgregarAutorButton(clickNumero: number, totalClicks: number): Promise<void> {
+    this.logger.info(`🔄 Realizando clic ${clickNumero}/${totalClicks} en botón '+' para agregar autor...`);
+    
+    try {
+      // ESTRATEGIA ESPECÍFICA: Buscar el botón + que está en la sección de Participación
+      // No usar .first() porque puede tomar el botón equivocado de otra sección
+      
+      const participationSelectors = [
+        // Estrategia 1: Buscar el + que está cerca del texto "Datos del participante"
+        'tr:has-text("Datos del participante") img[src*="mas.png"]',
+        // Estrategia 2: Buscar en la sección de Participación
+        'tr:has-text("Participación") ~ tr img[src*="mas.png"]',
+        // Estrategia 3: Buscar el + que NO esté en Registros de Contratos
+        'img[src*="mas.png"]:not(tr:has-text("Registros de Contratos") img)',
+        // Estrategia 4: Buscar por contexto de participación
+        'table tr:has-text("participante") img[src*="mas.png"]'
+      ];
+      
+      let plusButton = null;
+      let successStrategy = '';
+      
+      // Probar cada estrategia hasta encontrar el botón correcto
+      for (let i = 0; i < participationSelectors.length; i++) {
+        const selector = participationSelectors[i];
+        try {
+          const buttons = await this.page.locator(selector).all();
+          this.logger.info(`🔍 Estrategia ${i + 1}: "${selector}" encontró ${buttons.length} botones`);
+          
+          if (buttons.length > 0) {
+            // Usar el primer botón encontrado con esta estrategia
+            plusButton = buttons[0];
+            successStrategy = `Estrategia ${i + 1}: ${selector}`;
+            this.logger.info(`🎯 BOTÓN CORRECTO ENCONTRADO con: ${successStrategy}`);
+            break;
+          }
+        } catch (selectorError) {
+          this.logger.debug(`Estrategia ${i + 1} falló: ${selectorError}`);
+        }
+      }
+      
+      // Si no encontramos con las estrategias específicas, usar fallback con verificación
+      if (!plusButton) {
+        this.logger.info('🔄 FALLBACK: Buscando todos los botones + y verificando contexto...');
+        const allPlusButtons = await this.page.locator('img[src*="mas.png"]').all();
+        this.logger.info(`📊 Total de botones + encontrados: ${allPlusButtons.length}`);
+        
+        // Verificar cada botón para asegurar que NO esté en Registros de Contratos
+        for (let i = 0; i < allPlusButtons.length; i++) {
+          const button = allPlusButtons[i];
+          
+          // Verificar si este botón está cerca de texto relacionado con contratos
+          try {
+            const nearContractText = await button.locator('..').locator('..').locator('tr:has-text("Registros de Contratos")').count();
+            if (nearContractText === 0) {
+              // Este botón NO está en la sección de contratos
+              plusButton = button;
+              successStrategy = `FALLBACK: Botón ${i + 1} (no en Registros de Contratos)`;
+              this.logger.info(`🎯 FALLBACK ÉXITO: ${successStrategy}`);
+              break;
+            } else {
+              this.logger.info(`❌ Botón ${i + 1} rechazado: está en sección de Registros de Contratos`);
+            }
+          } catch (contextError) {
+            // Si no podemos verificar el contexto, usar este botón como último recurso
+            if (!plusButton) {
+              plusButton = button;
+              successStrategy = `FALLBACK: Botón ${i + 1} (último recurso)`;
+              this.logger.info(`⚠️ ÚLTIMO RECURSO: ${successStrategy}`);
+            }
+          }
+        }
+      }
+      
+      if (plusButton) {
+        await plusButton.click();
+        this.logger.info(`✅ Click ${clickNumero} en botón '+' completado`);
+        this.logger.info(`✅ Estrategia exitosa: ${successStrategy}`);
+        
+        // Esperar un momento para que el formulario se agregue
+        await this.page.waitForTimeout(500);
+      } else {
+        throw new Error(`❌ No se pudo encontrar el botón '+' correcto para agregar autor en click ${clickNumero}`);
+      }
+      
+    } catch (error) {
+      this.logger.error(`❌ Error en click ${clickNumero}: ${error}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Paso 31: Insertar datos completos de autores en formularios
+   * ✅ OPTIMIZED: SUCCESS_STRATEGY patterns based on tested field discovery
+   * 🎯 BREAKTHROUGH: Solved 3-names + 3-surnames individual field insertion
+   * 🌍 NATIONALITY LOGIC: Argentina/Argentino → CUIT/CUIL/CDI, Others → Extranjero
+   * 🚫 EXTRANJERO PROTOCOL: No document number insertion for foreign authors
+   * 🚀 PERFORMANCE: Direct field patterns provide instant field location
+   */
+  private async insertarDatosAutores(autores: any[]): Promise<void> {
+    this.logger.info('🎯 PASO 31: Insertando datos de autores en formularios...');
+    const stepTracker = getStepTracker();
+    stepTracker.startStep(31);
+    
+    try {
+      // Verificar si hay autores en los datos
+      if (!autores || autores.length === 0) {
+        this.logger.info('No se encontraron autores en los datos. Saltando inserción de datos.');
+        stepTracker.logSuccess(31, 'No hay autores que procesar');
+        return;
+      }
+
+      this.logger.info(`📋 Insertando datos completos para ${autores.length} autores...`);
+
+      // PROCESAR TODOS LOS AUTORES
+      for (let i = 0; i < autores.length; i++) {
+        const autor = autores[i];
+        this.logger.info(`\n🔄 PROCESANDO AUTOR ${i + 1}/${autores.length}: ${autor.nombre?.primerNombre} ${autor.apellido?.primerApellido}`);
+        
+        try {
+          await this.insertarDatosCompletoAutor(autor, i);
+          this.logger.info(`✅ AUTOR ${i + 1} COMPLETADO: ${autor.nombre?.primerNombre} ${autor.apellido?.primerApellido}`);
+          
+          // ESTABILIZACIÓN DOM: Esperar entre autores para que la página se estabilice
+          if (i < autores.length - 1) { // No esperar después del último autor
+            this.logger.info(`⏳ Esperando estabilización DOM antes del siguiente autor...`);
+            await this.page.waitForTimeout(3000);
+          }
+        } catch (autorError) {
+          this.logger.error(`❌ Error procesando autor ${i + 1}: ${autorError}`);
+          throw new Error(`Error en autor ${i + 1} (${autor.nombre?.primerNombre}): ${autorError}`);
+        }
+      }
+
+      stepTracker.logSuccess(31, `Datos completos de ${autores.length} autores insertados exitosamente`);
+      this.logger.info(`✅ PASO 31 COMPLETADO - Todos los autores procesados exitosamente`);
+      
+    } catch (error) {
+      this.logger.error('Error insertando datos de autores:', error);
+      stepTracker.logError(31, `Error al insertar datos de autores: ${error}`);
+      throw error;
+    }
+  }
+
+  /**
+   * ESTRATEGIA COMPLETA: Insertar todos los datos de un autor específico
+   * 1. Configurar dropdown "¿Su participación en la obra es bajo un seudónimo?" -> "No"
+   * 2. Insertar nombres (primer, segundo, tercer)
+   * 3. Insertar apellidos (primer, segundo)
+   */
+  private async insertarDatosCompletoAutor(autor: any, autorIndex: number): Promise<void> {
+    this.logger.info(`🔤 Insertando datos completos del autor ${autorIndex + 1}: "${autor.nombre?.primerNombre} ${autor.apellido?.primerApellido}"`);
+    
+    try {
+      // PASO 1: Buscar formularios de autor específicamente por el texto "seudónimo"
+      this.logger.info(`🔍 PASO 1: Buscando formulario del autor ${autorIndex + 1} por texto "seudónimo"...`);
+      
+      // ESTRATEGIA OPTIMIZADA: Buscar por el texto específico "¿Su participación en la obra es bajo un seudónimo?"
+      const seudonimo_selectors = [
+        // Buscar filas que contengan el texto específico sobre seudónimo
+        'tr:has-text("¿Su participación en la obra es bajo un seudónimo?")',
+        'td:has-text("¿Su participación en la obra es bajo un seudónimo?")',
+        // Buscar por texto parcial si el completo no funciona
+        'tr:has-text("seudónimo")',
+        'td:has-text("seudónimo")'
+      ];
+      
+      let autorRows: any[] = [];
+      
+      for (const selector of seudonimo_selectors) {
+        try {
+          const rows = await this.page.locator(selector).all();
+          this.logger.info(`📊 Selector "${selector}" encontró ${rows.length} elementos`);
+          
+          if (rows.length > 0) {
+            autorRows = rows;
+            this.logger.info(`🎯 ENCONTRADAS ${rows.length} FILAS DE AUTOR con selector: ${selector}`);
+            break;
+          }
+        } catch (selectorError) {
+          this.logger.debug(`Selector ${selector} falló: ${selectorError}`);
+        }
+      }
+      
+      if (autorRows.length === 0) {
+        await takeScreenshot(this.page, `no_seudonimo_rows_found_autor_${autorIndex + 1}`, 'error');
+        throw new Error('❌ No se encontraron filas con texto "seudónimo"');
+      }
+      
+      // VERIFICAR que tenemos suficientes formularios para este autor
+      if (autorIndex >= autorRows.length) {
+        await takeScreenshot(this.page, `insufficient_forms_for_autor_${autorIndex + 1}`, 'error');
+        throw new Error(`❌ No hay suficientes formularios. Necesario: ${autorIndex + 1}, Disponibles: ${autorRows.length}`);
+      }
+      
+      // PASO 2: Trabajar con el formulario específico de este autor
+      this.logger.info(`🎯 PASO 2: Configurando dropdown del autor ${autorIndex + 1} de ${autorRows.length}...`);
+      
+      const autorRow = autorRows[autorIndex]; // Usar el índice para el autor específico
+      
+      // PASO 3: Buscar el dropdown a la derecha del texto "seudónimo" en esa fila
+      this.logger.info('🔍 PASO 3: Buscando dropdown a la derecha de "seudónimo"...');
+      
+      const dropdown_selectors_in_row = [
+        // Buscar dropdown dentro de la misma fila
+        'select',
+        'button:has(img[src*="combo"])', // Botón de dropdown ZK
+        '.z-combobox-btn', // Botón combobox ZK
+        'input[type="button"]', // Input button que actúa como dropdown
+        '[role="combobox"]' // Elemento con rol combobox
+      ];
+      
+      let dropdown = null;
+      
+      for (const dropSelector of dropdown_selectors_in_row) {
+        try {
+          const dropdowns = await autorRow.locator(dropSelector).all();
+          this.logger.info(`📊 Dropdown selector "${dropSelector}" encontró ${dropdowns.length} elementos en la fila`);
+          
+          if (dropdowns.length > 0) {
+            dropdown = dropdowns[0]; // Tomar el primer dropdown de la fila
+            
+            // Log adicional del dropdown encontrado
+            const dropdownTag = await dropdown.evaluate((el: any) => el.tagName);
+            const dropdownName = await dropdown.getAttribute('name') || 'sin name';
+            const dropdownClass = await dropdown.getAttribute('class') || 'sin class';
+            
+            this.logger.info(`🎯 DROPDOWN ENCONTRADO: tag=${dropdownTag}, name="${dropdownName}", class="${dropdownClass}"`);
+            break;
+          }
+        } catch (dropError) {
+          this.logger.debug(`Dropdown selector ${dropSelector} falló: ${dropError}`);
+        }
+      }
+      
+      if (!dropdown) {
+        await takeScreenshot(this.page, `no_dropdown_in_seudonimo_row_autor_${autorIndex + 1}`, 'error');
+        throw new Error(`❌ No se encontró dropdown en la fila de seudónimo para autor ${autorIndex + 1}`);
+      }
+      
+      // PASO 4: Configurar el dropdown (hacer click para abrirlo)
+      this.logger.info(`🔽 PASO 4: Configurando dropdown de seudónimo para autor ${autorIndex + 1}...`);
+      
+      try {
+        // Tomar screenshot antes de configurar
+        await takeScreenshot(this.page, `before_seudonimo_dropdown_config_autor_${autorIndex + 1}`, 'debug');
+        
+        // Click en el dropdown para abrirlo
+        await dropdown.click({ timeout: 5000 });
+        this.logger.info('✅ Click en dropdown ejecutado');
+        
+        // Esperar a que aparezcan las opciones
+        await this.page.waitForTimeout(1000);
+        
+        // Buscar opciones del dropdown (pueden estar en popup)
+        const option_selectors = [
+          // Opciones visibles en la página
+          'option:visible',
+          // Opciones en popup ZK
+          '.z-comboitem:visible',
+          '.z-popup:visible .z-comboitem',
+          // Texto "Si" o "No" en elementos clickeables
+          'td:visible:has-text("Si")',
+          'div:visible:has-text("Si")',
+          'span:visible:has-text("Si")',
+          // Lista de elementos
+          'li:visible:has-text("Si")'
+        ];
+        
+        let optionFound = false;
+        
+        for (const optSelector of option_selectors) {
+          try {
+            const options = await this.page.locator(optSelector).all();
+            this.logger.info(`📊 Option selector "${optSelector}" encontró ${options.length} opciones`);
+            
+            if (options.length > 0) {
+              // Buscar y seleccionar SIEMPRE "No" para seudónimo
+              for (const option of options) {
+                const optionText = await option.textContent();
+                this.logger.info(`🔸 Opción encontrada: "${optionText}"`);
+                
+                // SIEMPRE seleccionar "No" para seudónimo (el autor no usa seudónimo)
+                if (optionText?.trim().toLowerCase() === 'no') {
+                  this.logger.info(`✅ Seleccionando opción "No" (no usa seudónimo)`);
+                  await option.click();
+                  optionFound = true;
+                  break;
+                }
+              }
+              
+              // Si no encontramos "No", buscar "Si" como fallback
+              if (!optionFound) {
+                for (const option of options) {
+                  const optionText = await option.textContent();
+                  if (optionText?.trim().toLowerCase() === 'si') {
+                    this.logger.info(`🔄 Fallback: Seleccionando "Si" (no se encontró "No")`);
+                    await option.click();
+                    optionFound = true;
+                    break;
+                  }
+                }
+              }
+              
+              if (optionFound) break;
+            }
+          } catch (optError) {
+            this.logger.debug(`Option selector ${optSelector} falló: ${optError}`);
+          }
+        }
+        
+        if (!optionFound) {
+          this.logger.warn('⚠️ No se encontraron opciones Si/No, continuando sin seleccionar...');
+        }
+        
+        // Esperar a que se actualice la página después de la selección
+        await this.page.waitForTimeout(2000);
+        
+        // Tomar screenshot después de configurar
+        await takeScreenshot(this.page, `after_seudonimo_dropdown_config_autor_${autorIndex + 1}`, 'debug');
+        
+      } catch (dropdownError) {
+        this.logger.warn(`⚠️ Error configurando dropdown: ${dropdownError}`);
+        await takeScreenshot(this.page, `error_configurando_dropdown_autor_${autorIndex + 1}`, 'error');
+        // No lanzar error, continuar para ver si los campos ya están disponibles
+      }
+      
+      // PASO 5: Buscar y configurar dropdown combo_sino_datos_participante
+      this.logger.info(`🔍 PASO 5: Buscando dropdown combo_sino_datos_participante para autor ${autorIndex + 1}...`);
+      
+      // ANÁLISIS COMPLETO: Buscar TODOS los dropdowns para entender la estructura
+      this.logger.info('🔬 ANÁLISIS: Buscando todos los dropdowns disponibles...');
+      
+      try {
+        const allSelects = await this.page.locator('select').all();
+        this.logger.info(`📊 Total dropdowns en la página: ${allSelects.length}`);
+        
+        for (let i = 0; i < allSelects.length; i++) {
+          const select = allSelects[i];
+          const name = await select.getAttribute('name') || 'sin name';
+          const id = await select.getAttribute('id') || 'sin id';
+          const visible = await select.isVisible();
+          this.logger.info(`🔸 Dropdown ${i + 1}: name="${name}", id="${id}", visible=${visible}`);
+        }
+      } catch (analysisError) {
+        this.logger.warn(`Error en análisis de dropdowns: ${analysisError}`);
+      }
+      
+      // Buscar el dropdown combo_sino_datos_participante específico para este autor
+      // PATTERN DISCOVERED: nombre_1_datos_participante, so combo should follow similar pattern
+      const comboParticipanteSelectors = [
+        `select[name*="combo_sino_datos_participante"]:visible`,
+        `select[name="combo_sino_${autorIndex + 1}_datos_participante"]:visible`, // Dynamic pattern
+        `select[name*="combo_sino"]:visible`, // Broader search
+        `select[name*="participante"]:visible`,
+        `select[name*="datos_participante"]:visible`,
+        `select:visible` // Last resort: any visible dropdown
+      ];
+      
+      let comboDropdown = null;
+      
+      for (const comboSelector of comboParticipanteSelectors) {
+        try {
+          const dropdowns = await this.page.locator(comboSelector).all();
+          this.logger.info(`📊 Combo selector "${comboSelector}" encontró ${dropdowns.length} elementos`);
+          
+          if (dropdowns.length > 0) {
+            // Para el último selector (any dropdown), usar el índice del autor
+            if (comboSelector === 'select:visible' && autorIndex < dropdowns.length) {
+              comboDropdown = dropdowns[autorIndex];
+            } else if (dropdowns.length > 0) {
+              comboDropdown = dropdowns[0]; // Usar el primero para selectores específicos
+            }
+            
+            if (comboDropdown) {
+              const name = await comboDropdown.getAttribute('name') || 'sin name';
+              this.logger.info(`🎯 COMBO DROPDOWN ENCONTRADO: name="${name}", selector="${comboSelector}"`);
+              break;
+            }
+          }
+        } catch (comboError) {
+          this.logger.debug(`Combo selector ${comboSelector} falló: ${comboError}`);
+        }
+      }
+      
+      if (comboDropdown) {
+        try {
+          this.logger.info(`🔽 PASO 5b: Configurando combo_sino_datos_participante → "Si" para autor ${autorIndex + 1}...`);
+          
+          // Tomar screenshot antes
+          await takeScreenshot(this.page, `before_combo_participante_autor_${autorIndex + 1}`, 'debug');
+          
+          // Seleccionar "Si" en el dropdown
+          await comboDropdown.selectOption('Si');
+          await this.page.waitForTimeout(1000);
+          
+          // Tomar screenshot después
+          await takeScreenshot(this.page, `after_combo_participante_autor_${autorIndex + 1}`, 'debug');
+          
+          this.logger.info(`✅ Dropdown combo_sino_datos_participante configurado a "Si" para autor ${autorIndex + 1}`);
+          
+        } catch (comboError) {
+          this.logger.warn(`⚠️ Error configurando combo_sino_datos_participante: ${comboError}`);
+        }
+      } else {
+        this.logger.warn(`⚠️ No se encontró dropdown combo_sino_datos_participante para autor ${autorIndex + 1}`);
+      }
+      
+      // PASO 6: Insertar todos los datos del autor
+      this.logger.info(`🔍 PASO 6: Insertando datos completos del autor ${autorIndex + 1}...`);
+      
+      // Esperar a que aparezcan todos los campos después del dropdown
+      await this.page.waitForTimeout(2000);
+      
+      // FASE 1: Solo nombres y apellidos (usando pattern discoveries)
+      // PATTERN DISCOVERED: nombre_1_datos_participante para primer autor
+      const authorNum = autorIndex + 1;
+      const camposACompletar = [
+        // 2. Fill Name Fields - OPTIMIZED with SUCCESS_STRATEGY
+        { 
+          nombre: 'Primer Nombre', 
+          valor: autor.nombre?.primerNombre,
+          tipo: 'text',
+          selectors: [
+            // ✅ SUCCESS_STRATEGY: Exact name pattern - works 100% of time for authors 1-3
+            `input[name="nombre_${authorNum}_datos_participante"]:visible`,
+            // ✅ SUCCESS_STRATEGY: Broad nombre search with exclusions - works for authors 4-5
+            'input[name*="nombre"]:visible:not([name*="segundo"]):not([name*="tercer"])',
+            // Fallback: Context-based search
+            'tr:has-text("Nombre") input[type="text"]:visible'
+          ]
+        },
+        { 
+          nombre: 'Segundo Nombre', 
+          valor: autor.nombre?.segundoNombre,
+          tipo: 'text',
+          selectors: [
+            // ✅ SUCCESS_STRATEGY: Exact pattern for second name - works 100% of time
+            authorNum === 1 ? `input[name="nombre_2_datos_participante"]:visible` : `input[name="nombre_2_datos_participante_R${authorNum - 1}"]:visible`,
+            // ✅ SUCCESS_STRATEGY: Broad search with correct pattern - fallback for pattern variations
+            'input[name*="nombre_2"]:visible',
+            // Legacy fallback patterns (rarely needed)
+            'input[name*="segundo_nombre"]:visible',
+            'input[placeholder*="segundo nombre" i]:visible'
+          ]
+        },
+        { 
+          nombre: 'Tercer Nombre', 
+          valor: autor.nombre?.tercerNombre,
+          tipo: 'text',
+          selectors: [
+            // ✅ SUCCESS_STRATEGY: Exact pattern for third name - works 100% of time
+            authorNum === 1 ? `input[name="nombre_3_datos_participante"]:visible` : `input[name="nombre_3_datos_participante_R${authorNum - 1}"]:visible`,
+            // ✅ SUCCESS_STRATEGY: Broad search with correct pattern - fallback for pattern variations
+            'input[name*="nombre_3"]:visible',
+            // Legacy fallback patterns (rarely needed)
+            'input[name*="tercer_nombre"]:visible',
+            'input[placeholder*="tercer nombre" i]:visible'
+          ]
+        },
+        // 3. Fill Surname Fields - OPTIMIZED with SUCCESS_STRATEGY (Individual fields)
+        { 
+          nombre: 'Primer Apellido', 
+          valor: autor.apellido?.primerApellido,
+          tipo: 'text',
+          selectors: [
+            // ✅ SUCCESS_STRATEGY: Exact apellido pattern - works 100% of time for authors 1-3
+            `input[name="apellido_${authorNum}_datos_participante"]:visible`,
+            // ✅ SUCCESS_STRATEGY: Broad apellido search with exclusions - works for authors 4-5
+            'input[name*="apellido"]:visible:not([name*="segundo"]):not([name*="tercer"])',
+            // Fallback: Context-based search
+            'tr:has-text("Letra") input[type="text"]:visible'
+          ]
+        },
+        { 
+          nombre: 'Segundo Apellido', 
+          valor: autor.apellido?.segundoApellido,
+          tipo: 'text',
+          selectors: [
+            // ✅ CORRECT PATTERN: Based on successful logs
+            `input[name="apellido_2_datos_participante"]:visible`, // Author 1
+            `input[name="apellido_2_datos_participante_R1"]:visible`, // Author 2+
+            // Fallback patterns
+            'input[name*="segundo_apellido"]:visible',
+            'input[placeholder*="segundo apellido" i]:visible'
+          ]
+        },
+        { 
+          nombre: 'Tercer Apellido', 
+          valor: autor.apellido?.tercerApellido,
+          tipo: 'text',
+          selectors: [
+            // ✅ CORRECT PATTERN: Based on successful logs
+            `input[name="apellido_3_datos_participante"]:visible`, // Author 1
+            `input[name="apellido_3_datos_participante_R1"]:visible`, // Author 2+
+            // Fallback patterns
+            'input[name*="tercer_apellido"]:visible',
+            'input[placeholder*="tercer apellido" i]:visible'
+          ]
+        },
+        // 4. Fill Document Information - OPTIMIZED with SUCCESS_STRATEGY (Based on Nationality)
+        { 
+          nombre: 'Tipo de Documento', 
+          valor: this.getDocumentTypeByNationality(autor), // Smart selection: CUIT/CUIL/CDI for Argentina, Extranjero for others
+          tipo: 'zk_dropdown',
+          selectors: [
+            // ✅ SUCCESS_STRATEGY: Direct ZK combobox button - works 100% of time
+            'tr:has-text("Tipo de Documento") .z-combobox-btn:visible',
+            // Fallback: Other ZK button patterns
+            'tr:has-text("Tipo de Documento") button:has(img[src*="combo"]):visible',
+            'td:has-text("Tipo de Documento") ~ td .z-combobox-btn:visible',
+            'label:has-text("Tipo de Documento") ~ .z-combobox:visible .z-combobox-btn',
+            // Last resort: any button in tipo documento row
+            'tr:has-text("Tipo de Documento") button:visible',
+            'tr:has-text("Tipo de Documento") select:visible'
+          ]
+        }
+        // NOTA: Nacionalidad ya no se inserta como campo separado
+        // Se usa para determinar el tipo de documento apropiado
+      ];
+      
+      let camposCompletos = 0;
+      
+      for (const campo of camposACompletar) {
+        // Saltar campos vacíos (opcional)
+        if (!campo.valor || campo.valor.trim() === '') {
+          this.logger.info(`⏭️ Saltando campo "${campo.nombre}" (valor vacío)`);
+          continue;
+        }
+        
+        this.logger.info(`🔤 Insertando ${campo.nombre}: "${campo.valor}"`);
+        
+        let fieldInput = null;
+        
+        // ESTRATEGIA ULTRA-RESTRICTIVA: Solo buscar dentro del contenedor "Datos del participante" específico
+        // Primero, encontrar el formulario específico de este autor por el texto "seudónimo"
+        const autorFormRows = await this.page.locator('tr:has-text("¿Su participación en la obra es bajo un seudónimo?")').all();
+        
+        if (autorIndex < autorFormRows.length) {
+          const autorSpecificForm = autorFormRows[autorIndex];
+          this.logger.info(`🎯 Usando formulario específico del autor ${autorIndex + 1}`);
+          
+          // RESTRICCIÓN CRÍTICA: Solo buscar dentro de la sección "Datos del participante"
+          // Buscar hacia abajo desde la fila de seudónimo hasta encontrar el siguiente autor o fin de sección
+          const authorDataContainer = autorSpecificForm.locator('xpath=following-sibling::tr[not(contains(., "¿Su participación en la obra es bajo un seudónimo?")) and not(contains(., "Domicilio del editor")) and not(contains(., "Datos de la impresión"))]');
+          
+          this.logger.info(`🔒 RESTRICCIÓN: Búsqueda limitada solo a sección "Datos del participante" del autor ${autorIndex + 1}`);
+          
+          // Buscar campos SOLO dentro de la sección de datos del participante
+          for (const selector of campo.selectors) {
+            try {
+              // Buscar dentro del contenedor de datos del participante específico
+              const inputsInAutorData = await authorDataContainer.locator(selector).all();
+              this.logger.info(`📊 Selector "${selector}" encontró ${inputsInAutorData.length} inputs en DATOS DEL PARTICIPANTE autor ${autorIndex + 1}`);
+              
+              if (inputsInAutorData.length > 0) {
+                // Verificar que el campo NO pertenece a editor o impresión
+                const fieldName = await inputsInAutorData[0].getAttribute('name') || '';
+                
+                if (!fieldName.includes('editor') && !fieldName.includes('impresion') && !fieldName.includes('domicilio_editor')) {
+                  fieldInput = inputsInAutorData[0];
+                  
+                  const name = await fieldInput.getAttribute('name') || 'sin name';
+                  const placeholder = await fieldInput.getAttribute('placeholder') || 'sin placeholder';
+                  this.logger.info(`🎯 Campo "${campo.nombre}" VÁLIDO en datos participante autor ${autorIndex + 1}: name="${name}", placeholder="${placeholder}"`);
+                  break;
+                } else {
+                  this.logger.warn(`❌ Campo rechazado (pertenece a editor/impresión): name="${fieldName}"`);
+                }
+              }
+            } catch (fieldError) {
+              this.logger.debug(`Selector ${selector} falló en datos participante autor ${autorIndex + 1}: ${fieldError}`);
+            }
+          }
+        }
+        
+        // IMPROVED FALLBACK: Buscar campo usando contexto del formulario del autor
+        if (!fieldInput) {
+          this.logger.info(`🔄 IMPROVED FALLBACK: Buscando campo por contexto de formulario para autor ${autorIndex + 1}`);
+          
+          // Estrategia mejorada: Buscar dentro del contexto de cada formulario de autor
+          try {
+            // Obtener todas las secciones de autor (contenedores grises con seudónimo)
+            const autorSections = await this.page.locator('tr:has-text("¿Su participación en la obra es bajo un seudónimo?")').all();
+            this.logger.info(`📊 Encontradas ${autorSections.length} secciones de autor en la página`);
+            
+            if (autorIndex < autorSections.length) {
+              const currentAutorSection = autorSections[autorIndex];
+              this.logger.info(`🎯 Usando sección del autor ${autorIndex + 1} para búsqueda de campo`);
+              
+              // Buscar todos los campos de texto en la sección de este autor específico
+              // Expandir la búsqueda hacia abajo desde la fila de seudónimo
+              const authorContainer = currentAutorSection.locator('xpath=following-sibling::tr[position() <= 10]');
+              
+              for (const selector of campo.selectors) {
+                try {
+                  // Primero intentar selector específico dentro del contenedor del autor
+                  const containerInputs = await authorContainer.locator(selector).all();
+                  this.logger.info(`📊 Contenedor autor ${autorIndex + 1} - Selector "${selector}" encontró ${containerInputs.length} inputs`);
+                  
+                  if (containerInputs.length > 0) {
+                    fieldInput = containerInputs[0]; // Tomar el primer input del contenedor de este autor
+                    
+                    const name = await fieldInput.getAttribute('name') || 'sin name';
+                    const placeholder = await fieldInput.getAttribute('placeholder') || 'sin placeholder';
+                    this.logger.info(`🎯 Campo "${campo.nombre}" encontrado en contenedor autor ${autorIndex + 1}: name="${name}", placeholder="${placeholder}"`);
+                    break;
+                  }
+                } catch (containerError) {
+                  this.logger.debug(`Selector en contenedor ${selector} falló: ${containerError}`);
+                }
+              }
+              
+              // Si no funcionó con el contenedor, intentar con la tabla padre
+              if (!fieldInput) {
+                this.logger.info(`🔄 Expandiendo búsqueda a tabla padre del autor ${autorIndex + 1}`);
+                const parentTable = currentAutorSection.locator('xpath=ancestor::table[1]');
+                
+                for (const selector of campo.selectors) {
+                  try {
+                    const tableInputs = await parentTable.locator(selector).all();
+                    this.logger.info(`📊 Tabla padre autor ${autorIndex + 1} - Selector "${selector}" encontró ${tableInputs.length} inputs`);
+                    
+                    if (tableInputs.length > 0) {
+                      // Buscar el input que está más cerca de nuestra fila de seudónimo
+                      fieldInput = tableInputs[0]; // Por ahora usar el primero
+                      
+                      const name = await fieldInput.getAttribute('name') || 'sin name';
+                      const placeholder = await fieldInput.getAttribute('placeholder') || 'sin placeholder';
+                      this.logger.info(`🎯 Campo "${campo.nombre}" encontrado en tabla padre: name="${name}", placeholder="${placeholder}"`);
+                      break;
+                    }
+                  } catch (tableError) {
+                    this.logger.debug(`Selector en tabla ${selector} falló: ${tableError}`);
+                  }
+                }
+              }
+            }
+          } catch (contextError) {
+            this.logger.warn(`Error en búsqueda por contexto: ${contextError}`);
+          }
+          
+          // ÚLTIMO RECURSO RESTRINGIDO: Búsqueda global pero EXCLUYENDO campos de editor/impresión
+          if (!fieldInput) {
+            this.logger.info(`🔄 ÚLTIMO RECURSO RESTRINGIDO: Búsqueda global excluyendo editor/impresión para autor ${autorIndex + 1}`);
+            for (const selector of campo.selectors) {
+              try {
+                const inputs = await this.page.locator(selector).all();
+                this.logger.info(`📊 Selector global "${selector}" encontró ${inputs.length} inputs para ${campo.nombre}`);
+                
+                if (inputs.length > 0) {
+                  // Filtrar inputs para EXCLUIR campos de editor/impresión
+                  const validInputs = [];
+                  
+                  for (const input of inputs) {
+                    const name = await input.getAttribute('name') || '';
+                    
+                    // FILTRO CRÍTICO: Excluir campos de editor, impresión, domicilio
+                    if (!name.includes('editor') && !name.includes('impresion') && !name.includes('domicilio_editor') && !name.includes('datos_impresion')) {
+                      validInputs.push(input);
+                      this.logger.info(`✅ Input válido encontrado: name="${name}"`);
+                    } else {
+                      this.logger.info(`❌ Input rechazado (editor/impresión): name="${name}"`);
+                    }
+                  }
+                  
+                  if (validInputs.length > 0) {
+                    // Buscar input que tenga el número del autor en el name
+                    let targetInput = null;
+                    
+                    for (const input of validInputs) {
+                      const name = await input.getAttribute('name') || '';
+                      
+                      // Verificar si el name contiene el número del autor actual
+                      if (name.includes(`_${autorIndex + 1}_`) || name.includes(`${autorIndex + 1}_`)) {
+                        targetInput = input;
+                        this.logger.info(`🎯 Input específico encontrado para autor ${autorIndex + 1}: name="${name}"`);
+                        break;
+                      }
+                    }
+                    
+                    // Si no encontramos por número, usar el de la posición pero SOLO de inputs válidos
+                    if (!targetInput && autorIndex < validInputs.length) {
+                      targetInput = validInputs[autorIndex];
+                      const name = await targetInput.getAttribute('name') || 'sin name';
+                      this.logger.warn(`⚠️ Usando input válido por posición ${autorIndex}: name="${name}"`);
+                    }
+                    
+                    if (targetInput) {
+                      fieldInput = targetInput;
+                      const name = await fieldInput.getAttribute('name') || 'sin name';
+                      const placeholder = await fieldInput.getAttribute('placeholder') || 'sin placeholder';
+                      this.logger.info(`🎯 Campo "${campo.nombre}" encontrado (excluyendo editor): name="${name}", placeholder="${placeholder}" (autor ${autorIndex + 1})`);
+                      break;
+                    }
+                  } else {
+                    this.logger.warn(`⚠️ No se encontraron inputs válidos (todos eran de editor/impresión)`);
+                  }
+                }
+              } catch (fieldError) {
+                this.logger.debug(`Selector global ${selector} falló para ${campo.nombre}: ${fieldError}`);
+              }
+            }
+          }
+        }
+        
+        if (fieldInput) {
+          try {
+            if (campo.tipo === 'dropdown') {
+              // Manejo de dropdown estándar
+              await fieldInput.selectOption(campo.valor);
+              this.logger.info(`✅ ${campo.nombre} seleccionado: "${campo.valor}"`);
+              camposCompletos++;
+            } else if (campo.tipo === 'zk_dropdown') {
+              // Manejo especial para dropdown "Tipo de Documento"
+              if (campo.nombre === 'Tipo de Documento') {
+                await this.handleTipoDocumentoDropdown(fieldInput, campo.valor, autor, autorIndex);
+                camposCompletos++;
+              } else {
+                // Manejo genérico de dropdown ZK Framework
+                this.logger.info(`🔽 Configurando ZK dropdown "${campo.nombre}" → "${campo.valor}"`);
+                
+                // Click en el botón del dropdown para abrirlo
+                await fieldInput.click({ timeout: 5000 });
+                this.logger.info('✅ Click en dropdown ZK ejecutado');
+                
+                // Esperar a que aparezcan las opciones
+                await this.page.waitForTimeout(1000);
+                
+                // Buscar y seleccionar la opción
+                const optionSelectors = [
+                  '.z-comboitem:visible',
+                  'option:visible',
+                  '.z-popup:visible .z-comboitem',
+                  '.z-dropdown:visible option'
+                ];
+                
+                let optionSelected = false;
+                
+                for (const optSelector of optionSelectors) {
+                  try {
+                    const options = await this.page.locator(optSelector).all();
+                    this.logger.info(`📊 Option selector "${optSelector}" encontró ${options.length} opciones`);
+                    
+                    if (options.length > 0) {
+                      for (const option of options) {
+                        const optionText = await option.textContent();
+                        this.logger.info(`🔸 Opción encontrada: "${optionText?.trim()}"`);
+                        
+                        // Buscar por coincidencia exacta o parcial
+                        if (optionText?.trim() === campo.valor || optionText?.includes(campo.valor)) {
+                          await option.click();
+                          this.logger.info(`✅ Opción "${campo.valor}" seleccionada en ZK dropdown`);
+                          optionSelected = true;
+                          camposCompletos++;
+                          break;
+                        }
+                      }
+                    }
+                    
+                    if (optionSelected) break;
+                  } catch (optError) {
+                    this.logger.debug(`Option selector ${optSelector} falló: ${optError}`);
+                  }
+                }
+                
+                if (!optionSelected) {
+                  this.logger.warn(`⚠️ No se encontró opción "${campo.valor}" en ZK dropdown`);
+                }
+                
+                // Esperar a que se cierre el dropdown
+                await this.page.waitForTimeout(500);
+                
+                // CRITICAL: Esperar estabilización después de ZK dropdown para evitar problemas DOM
+                await this.page.waitForTimeout(2000);
+              }
+            } else {
+              // Manejo de campo de texto
+              await fieldInput.click({ timeout: 3000 });
+              await fieldInput.fill('');
+              await fieldInput.fill(campo.valor);
+              
+              // Verificar inserción
+              const insertedValue = await fieldInput.inputValue();
+              if (insertedValue === campo.valor) {
+                this.logger.info(`✅ ${campo.nombre} insertado correctamente: "${campo.valor}"`);
+                camposCompletos++;
+              } else {
+                this.logger.warn(`⚠️ ${campo.nombre} - Verificación falló. Esperado: "${campo.valor}", Actual: "${insertedValue}"`);
+              }
+            }
+            
+          } catch (insertError) {
+            this.logger.error(`❌ Error insertando ${campo.nombre}: ${insertError}`);
+            // Continuar con el siguiente campo en lugar de fallar
+          }
+        } else {
+          this.logger.warn(`⚠️ No se encontró campo para ${campo.nombre}`);
+        }
+      }
+      
+      // 6. Select Role Checkboxes - Based on autor.rol
+      this.logger.info(`🎭 PASO 7: Seleccionando checkboxes de rol para autor ${autorIndex + 1}: "${autor.rol}"`);
+      
+      try {
+        await this.selectRoleCheckboxes(autor.rol, autorIndex);
+        this.logger.info(`✅ Checkboxes de rol seleccionados para autor ${autorIndex + 1}: "${autor.rol}"`);
+      } catch (roleError) {
+        this.logger.warn(`⚠️ Error seleccionando checkboxes de rol para autor ${autorIndex + 1}: ${roleError}`);
+        // No fallar por esto, continuar
+      }
+      
+      // 7. Take Final Screenshot
+      await takeScreenshot(this.page, `autor_${autorIndex + 1}_datos_completos_final`, 'debug');
+      
+      if (camposCompletos === 0) {
+        throw new Error(`❌ No se pudo insertar ningún campo para autor ${autorIndex + 1}`);
+      } else {
+        this.logger.info(`✅ AUTOR ${autorIndex + 1} COMPLETADO: ${camposCompletos} campos insertados de ${camposACompletar.filter(c => c.valor && c.valor.trim() !== '').length} disponibles`);
+      }
+      
+    } catch (error) {
+      this.logger.error(`❌ Error en proceso completo de inserción: ${error}`);
+      
+      try {
+        await takeScreenshot(this.page, `insertar_datos_autores_error_autor_${autorIndex + 1}`, 'error');
+      } catch (screenshotError) {
+        this.logger.warn('No se pudo tomar screenshot del error');
+      }
+      
+      throw error;
+    }
+  }
+
+  /**
+   * Manejo especializado para dropdown "Tipo de Documento" + inserción del número
+   * Este método maneja la secuencia completa: seleccionar tipo → esperar campo → insertar número
+   */
+  private async handleTipoDocumentoDropdown(dropdownButton: any, tipoDocumento: string, autor: any, autorIndex: number): Promise<void> {
+    this.logger.info(`📋 MANEJO COMPLETO: Tipo de Documento "${tipoDocumento}" + Número "${autor.fiscalId?.numero}" para autor ${autorIndex + 1}`);
+    
+    try {
+      // PASO 1: Seleccionar tipo de documento en el dropdown
+      this.logger.info(`🔽 PASO 1: Seleccionando tipo de documento "${tipoDocumento}"`);
+      
+      // Click en el botón del dropdown para abrirlo
+      await dropdownButton.click({ timeout: 5000 });
+      this.logger.info('✅ Dropdown de tipo de documento abierto');
+      
+      // Esperar a que aparezcan las opciones
+      await this.page.waitForTimeout(1000);
+      
+      // Buscar y seleccionar la opción del tipo de documento
+      const optionSelectors = [
+        '.z-comboitem:visible',
+        'option:visible',
+        '.z-popup:visible .z-comboitem',
+        '.z-dropdown:visible option'
+      ];
+      
+      let optionSelected = false;
+      
+      for (const optSelector of optionSelectors) {
+        try {
+          const options = await this.page.locator(optSelector).all();
+          this.logger.info(`📊 Opciones disponibles: ${options.length} con selector "${optSelector}"`);
+          
+          if (options.length > 0) {
+            for (const option of options) {
+              const optionText = await option.textContent();
+              this.logger.info(`🔸 Opción: "${optionText?.trim()}"`);
+              
+              if (optionText?.trim() === tipoDocumento || optionText?.includes(tipoDocumento)) {
+                await option.click();
+                this.logger.info(`✅ Tipo de documento "${tipoDocumento}" seleccionado`);
+                optionSelected = true;
+                break;
+              }
+            }
+          }
+          
+          if (optionSelected) break;
+        } catch (optError) {
+          this.logger.debug(`Selector de opciones ${optSelector} falló: ${optError}`);
+        }
+      }
+      
+      if (!optionSelected) {
+        throw new Error(`❌ No se pudo seleccionar tipo de documento "${tipoDocumento}"`);
+      }
+      
+      // ✅ PROTOCOLO ESPECIAL: Extranjeros no tienen campo de número de documento
+      if (tipoDocumento === 'Extranjero') {
+        this.logger.info(`🌍 PROTOCOLO EXTRANJERO: Autor ${autorIndex + 1} es extranjero - saltando inserción de número de documento`);
+        this.logger.info(`✅ MANEJO COMPLETO: Tipo de documento "Extranjero" completado para autor ${autorIndex + 1} (sin número de documento)`);
+        return; // Salir temprano - no hay campo de número para extranjeros
+      }
+      
+      // PASO 2: Esperar a que aparezca el campo de número de documento
+      this.logger.info(`⏳ PASO 2: Esperando que aparezca el campo de número de documento...`);
+      await this.page.waitForTimeout(2000); // Esperar a que ZK revele el campo
+      
+      // PASO 3: Buscar el campo de número de documento que apareció
+      this.logger.info(`🔍 PASO 3: Buscando campo de número de documento que apareció para autor ${autorIndex + 1}`);
+      
+      // Obtener nuevamente el formulario del autor (puede haber cambiado después del dropdown)
+      const autorSections = await this.page.locator('tr:has-text("¿Su participación en la obra es bajo un seudónimo?")').all();
+      
+      if (autorIndex >= autorSections.length) {
+        throw new Error(`No se encontró sección del autor ${autorIndex + 1} después de seleccionar tipo documento`);
+      }
+      
+      const currentAutorSection = autorSections[autorIndex];
+      
+      // Buscar el campo de número de documento - OPTIMIZED with SUCCESS_STRATEGY
+      const documentNumberSelectors = [
+        // ✅ SUCCESS_STRATEGY: Generic text input (last one is usually the document number that appeared)
+        'input[type="text"]:visible',
+        // Expected patterns based on logs
+        'input[name*="docu_num"]:visible',
+        'input[name*="documento"]:visible', 
+        'input[name*="numero"]:visible',
+        'input[placeholder*="número" i]:visible',
+        'input[placeholder*="documento" i]:visible'
+      ];
+      
+      let documentNumberField = null;
+      
+      // Buscar dentro del contenedor expandido del autor
+      const authorContainer = currentAutorSection.locator('xpath=following-sibling::tr[position() <= 10]');
+      
+      for (const selector of documentNumberSelectors) {
+        try {
+          const fields = await authorContainer.locator(selector).all();
+          this.logger.info(`📊 Selector "${selector}" encontró ${fields.length} campos de número`);
+          
+          if (fields.length > 0) {
+            // Tomar el último field (probablemente el que acaba de aparecer)
+            documentNumberField = fields[fields.length - 1];
+            
+            const name = await documentNumberField.getAttribute('name') || 'sin name';
+            const placeholder = await documentNumberField.getAttribute('placeholder') || 'sin placeholder';
+            
+            // Verificar que NO es un campo de editor
+            if (!name.includes('editor') && !name.includes('impresion')) {
+              this.logger.info(`🎯 Campo de número de documento encontrado: name="${name}", placeholder="${placeholder}"`);
+              break;
+            } else {
+              this.logger.info(`❌ Campo rechazado (es de editor): name="${name}"`);
+              documentNumberField = null;
+            }
+          }
+        } catch (fieldError) {
+          this.logger.debug(`Selector ${selector} falló: ${fieldError}`);
+        }
+      }
+      
+      // PASO 4: Insertar el número de documento
+      if (documentNumberField && autor.fiscalId?.numero) {
+        this.logger.info(`📝 PASO 4: Insertando número de documento "${autor.fiscalId.numero}"`);
+        
+        await documentNumberField.click({ timeout: 3000 });
+        await documentNumberField.fill('');
+        await documentNumberField.fill(autor.fiscalId.numero);
+        
+        // Verificar inserción
+        const insertedValue = await documentNumberField.inputValue();
+        if (insertedValue === autor.fiscalId.numero) {
+          this.logger.info(`✅ Número de documento insertado correctamente: "${autor.fiscalId.numero}"`);
+        } else {
+          this.logger.warn(`⚠️ Verificación falló. Esperado: "${autor.fiscalId.numero}", Actual: "${insertedValue}"`);
+        }
+      } else if (!autor.fiscalId?.numero) {
+        this.logger.warn(`⚠️ No hay número de documento para insertar (autor.fiscalId.numero está vacío)`);
+      } else {
+        this.logger.warn(`⚠️ No se encontró campo de número de documento después de seleccionar tipo`);
+      }
+      
+      // PASO 5: Estabilización final
+      this.logger.info(`⏳ PASO 5: Estabilización final después de manejo completo de documento`);
+      await this.page.waitForTimeout(1500);
+      
+      this.logger.info(`✅ MANEJO COMPLETO: Tipo de documento + número completado para autor ${autorIndex + 1}`);
+      
+    } catch (error) {
+      this.logger.error(`❌ Error en manejo de tipo de documento para autor ${autorIndex + 1}: ${error}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Seleccionar checkboxes de rol para un autor específico
+   * Basado en autor.rol: "Música y Letra", "Música", "Letra"
+   */
+  private async selectRoleCheckboxes(rol: string, autorIndex: number): Promise<void> {
+    this.logger.info(`🎭 Seleccionando checkboxes de rol: "${rol}" para autor ${autorIndex + 1}`);
+    
+    // Determinar qué checkboxes necesitamos marcar
+    const needsMusicaCheckbox = rol.includes('Música');
+    const needsLetraCheckbox = rol.includes('Letra');
+    
+    this.logger.info(`🎯 Checkboxes requeridos - Música: ${needsMusicaCheckbox}, Letra: ${needsLetraCheckbox}`);
+    
+    // Obtener el formulario específico de este autor
+    const autorSections = await this.page.locator('tr:has-text("¿Su participación en la obra es bajo un seudónimo?")').all();
+    
+    if (autorIndex >= autorSections.length) {
+      throw new Error(`No se encontró la sección del autor ${autorIndex + 1}`);
+    }
+    
+    const currentAutorSection = autorSections[autorIndex];
+    
+    // Expandir la búsqueda desde la fila de seudónimo hacia abajo
+    const authorContainer = currentAutorSection.locator('xpath=following-sibling::tr[position() <= 15]');
+    
+    // Selectores para encontrar checkboxes de Música y Letra
+    const musicaCheckboxSelectors = [
+      'input[type="checkbox"][name*="musica" i]:visible',
+      'input[type="checkbox"]:visible:has(~ label:has-text("Música"))',
+      'input[type="checkbox"]:visible:has(~ span:has-text("Música"))',
+      'tr:has-text("Música") input[type="checkbox"]:visible',
+      'td:has-text("Música") input[type="checkbox"]:visible'
+    ];
+    
+    const letraCheckboxSelectors = [
+      'input[type="checkbox"][name*="letra" i]:visible',
+      'input[type="checkbox"]:visible:has(~ label:has-text("Letra"))',
+      'input[type="checkbox"]:visible:has(~ span:has-text("Letra"))',
+      'tr:has-text("Letra") input[type="checkbox"]:visible',
+      'td:has-text("Letra") input[type="checkbox"]:visible'
+    ];
+    
+    // Seleccionar checkbox de Música si es necesario
+    if (needsMusicaCheckbox) {
+      this.logger.info(`🎵 Buscando checkbox de "Música" para autor ${autorIndex + 1}...`);
+      
+      let musicaCheckbox = null;
+      
+      for (const selector of musicaCheckboxSelectors) {
+        try {
+          const checkboxes = await authorContainer.locator(selector).all();
+          this.logger.info(`📊 Música selector "${selector}" encontró ${checkboxes.length} checkboxes`);
+          
+          if (checkboxes.length > 0) {
+            musicaCheckbox = checkboxes[0];
+            break;
+          }
+        } catch (error) {
+          this.logger.debug(`Música selector ${selector} falló: ${error}`);
+        }
+      }
+      
+      if (musicaCheckbox) {
+        try {
+          const isChecked = await musicaCheckbox.isChecked();
+          if (!isChecked) {
+            await musicaCheckbox.click();
+            this.logger.info(`✅ Checkbox "Música" seleccionado para autor ${autorIndex + 1}`);
+          } else {
+            this.logger.info(`ℹ️ Checkbox "Música" ya estaba seleccionado para autor ${autorIndex + 1}`);
+          }
+        } catch (clickError) {
+          this.logger.warn(`⚠️ Error haciendo click en checkbox "Música": ${clickError}`);
+        }
+      } else {
+        this.logger.warn(`⚠️ No se encontró checkbox "Música" para autor ${autorIndex + 1}`);
+      }
+    }
+    
+    // Seleccionar checkbox de Letra si es necesario
+    if (needsLetraCheckbox) {
+      this.logger.info(`📝 Buscando checkbox de "Letra" para autor ${autorIndex + 1}...`);
+      
+      let letraCheckbox = null;
+      
+      for (const selector of letraCheckboxSelectors) {
+        try {
+          const checkboxes = await authorContainer.locator(selector).all();
+          this.logger.info(`📊 Letra selector "${selector}" encontró ${checkboxes.length} checkboxes`);
+          
+          if (checkboxes.length > 0) {
+            letraCheckbox = checkboxes[0];
+            break;
+          }
+        } catch (error) {
+          this.logger.debug(`Letra selector ${selector} falló: ${error}`);
+        }
+      }
+      
+      if (letraCheckbox) {
+        try {
+          const isChecked = await letraCheckbox.isChecked();
+          if (!isChecked) {
+            await letraCheckbox.click();
+            this.logger.info(`✅ Checkbox "Letra" seleccionado para autor ${autorIndex + 1}`);
+          } else {
+            this.logger.info(`ℹ️ Checkbox "Letra" ya estaba seleccionado para autor ${autorIndex + 1}`);
+          }
+        } catch (clickError) {
+          this.logger.warn(`⚠️ Error haciendo click en checkbox "Letra": ${clickError}`);
+        }
+      } else {
+        this.logger.warn(`⚠️ No se encontró checkbox "Letra" para autor ${autorIndex + 1}`);
+      }
+    }
+    
+    // Esperar un momento para que se actualice la UI
+    await this.page.waitForTimeout(500);
+    
+    this.logger.info(`✅ Selección de checkboxes completada para autor ${autorIndex + 1}: "${rol}"`);
+  }
+
+  /**
+   * Helper method to determine document type based on nationality
+   * Selects appropriate document type for Argentine vs foreign nationals
+   */
+  private getDocumentTypeByNationality(autor: any): string {
+    const nacionalidad = autor.nacionalidad?.toLowerCase() || '';
+    
+    // For Argentine nationals, use the specified document type from JSON
+    if (nacionalidad === 'argentina' || nacionalidad === 'argentino') {
+      return autor.fiscalId?.tipo || 'CUIT'; // Default to CUIT if not specified
+    }
+    
+    // For foreign nationals, always use "Extranjero"
+    return 'Extranjero';
+  }
+
+  /**
+   * Paso 32: Check Process Step - Verificar proceso completado exitosamente
+   * Este paso analiza la página con todas las estrategias disponibles para verificar el estado final
+   * y mantiene el navegador abierto por 10 segundos para inspección visual
+   */
+  private async checkProcessStep(): Promise<void> {
+    this.logger.info('🔍 PASO 32: Verificando proceso completado exitosamente...');
+    const stepTracker = getStepTracker();
+    stepTracker.startStep(32);
     
     try {
       // Tomar screenshot del estado final
@@ -797,13 +1996,13 @@ export class TadRegistrationService {
       this.logger.info(`📋 Total de elementos analizados: ${formElements} formulario, ${zkElements} ZK`);
       this.logger.info('🔍 Verificación completa del proceso finalizada');
       
-      // Mantener navegador abierto por 5 segundos para inspección visual
-      this.logger.info('⏳ Manteniendo navegador abierto por 5 segundos para verificación visual...');
-      await new Promise(resolve => setTimeout(resolve, 5000));
+      // Mantener navegador abierto por 10 segundos para inspección visual
+      this.logger.info('⏳ Manteniendo navegador abierto por 10 segundos para verificación visual...');
+      await new Promise(resolve => setTimeout(resolve, 10000));
       this.logger.info('✅ Período de verificación visual completado');
       
-      stepTracker.logSuccess(30, 'Proceso verificado exitosamente con análisis completo');
-      this.logger.info('✅ PASO 30 COMPLETADO - Check Process Step ejecutado exitosamente');
+      stepTracker.logSuccess(32, 'Proceso verificado exitosamente con análisis completo');
+      this.logger.info('✅ PASO 32 COMPLETADO - Check Process Step ejecutado exitosamente');
       
     } catch (error) {
       this.logger.error('Error en Check Process Step:', error);

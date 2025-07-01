@@ -1,0 +1,100 @@
+{
+  "obra": {
+    "titulo": "Test Nacionalidades Mixtas",
+    "tipo": "Música y letra",
+    "album": true,
+    "cantidad_ejemplares": 1000,
+    "genero_musical": "World Music",
+    "esPublicacionWeb": true,
+    "urlPaginaWeb": "https://music.example.com/test-nacionalidades",
+    "lugar_publicacion": "Ciudad Autónoma de Buenos Aires",
+    "fecha_publicacion": "25-03-2025"
+  },
+  "autores": [
+    {
+      "nombre": { 
+        "primerNombre": "Pedro", 
+        "segundoNombre": "José", 
+        "tercerNombre": "Manuel" 
+      },
+      "apellido": { 
+        "primerApellido": "Sanchez", 
+        "segundoApellido": "García",
+        "tercerApellido": "López"
+      },
+      "fiscalId": { "tipo": "CUIT", "numero": "20-11111111-1" },
+      "nacionalidad": "Argentina",
+      "rol": "Música y Letra"
+    },
+    {
+      "nombre": { 
+        "primerNombre": "María", 
+        "segundoNombre": "Carmen",
+        "tercerNombre": "Isabel"
+      },
+      "apellido": { 
+        "primerApellido": "Rodríguez", 
+        "segundoApellido": "de", 
+        "tercerApellido": "la Cruz" 
+      },
+      "fiscalId": { "tipo": "CUIL", "numero": "27-22222222-2" },
+      "nacionalidad": "Argentino",
+      "rol": "Letra"
+    },
+    {
+      "nombre": { 
+        "primerNombre": "Carlos", 
+        "segundoNombre": "Eduardo",
+        "tercerNombre": "Alejandro"
+      },
+      "apellido": { 
+        "primerApellido": "Fernandez", 
+        "segundoApellido": "Martinez",
+        "tercerApellido": "Gonzalez"
+      },
+      "fiscalId": { "tipo": "CDI", "numero": "30-33333333-3" },
+      "nacionalidad": "Argentina",
+      "rol": "Música"
+    },
+    {
+      "nombre": { 
+        "primerNombre": "John",
+        "segundoNombre": "Michael",
+        "tercerNombre": "David"
+      },
+      "apellido": { 
+        "primerApellido": "Smith",
+        "segundoApellido": "Johnson",
+        "tercerApellido": "Brown"
+      },
+      "fiscalId": { "tipo": "Extranjero", "numero": "00-12345678-0" },
+      "nacionalidad": "Estados Unidos",
+      "rol": "Música"
+    }
+  ],
+  "editores": [
+    {
+      "tipoPersona": "Persona Juridica",
+      "razonSocial": "EPSA Publishing S.A.",
+      "cuit": "33-70957838-9",
+      "email": "mgonzalez@epsapublishing.com.ar",
+      "telefono": "15 5454 4444",
+      "porcentajeTitularidad": 5,
+      "domicilio": {
+        "calleYNumero": "Vera 410", 
+        "piso": "5", 
+        "departamento": "B", 
+        "cp": "1414",
+        "localidad": "CIUDAD AUTÓNOMA DE BUENOS AIRES", 
+        "provincia": "CIUDAD AUTÓNOMA DE BUENOS AIRES", 
+        "pais": "Argentina"
+      }
+    }
+  ],
+  "gestor": {
+    "cuitCuil": "20352552721",
+    "claveAfip": "Levitateme5023",
+    "representado": "EPSA PUBLISHING S A",
+    "emailNotificaciones": "nmaeso@gmail.com"
+  }
+}
