@@ -1,0 +1,49 @@
+{
+  "obra": {
+    "titulo": "Test Autor Minimal",
+    "tipo": "Música y letra",
+    "album": false,
+    "cantidad_ejemplares": 100,
+    "genero_musical": "Pop",
+    "esPublicacionWeb": true,
+    "urlPaginaWeb": "https://music.example.com/test-minimal",
+    "lugar_publicacion": "Ciudad Autónoma de Buenos Aires",
+    "fecha_publicacion": "01-04-2025"
+  },
+  "autores": [
+    {
+      "nombre": { 
+        "primerNombre": "Juan"
+      },
+      "apellido": { 
+        "primerApellido": "Perez"
+      },
+      "fiscalId": { "tipo": "CUIT", "numero": "20-12345678-9" },
+      "nacionalidad": "Argentina",
+      "rol": "Música y Letra"
+    }
+  ],
+  "editores": [
+    {
+      "tipoPersona": "Persona Juridica",
+      "razonSocial": "Test Editorial S.A.",
+      "cuit": "33-98765432-1",
+      "email": "test@editorial.com.ar",
+      "telefono": "11 1234 5678",
+      "porcentajeTitularidad": 100,
+      "domicilio": {
+        "calleYNumero": "Test 123", 
+        "cp": "1000",
+        "localidad": "CIUDAD AUTÓNOMA DE BUENOS AIRES", 
+        "provincia": "CIUDAD AUTÓNOMA DE BUENOS AIRES", 
+        "pais": "Argentina"
+      }
+    }
+  ],
+  "gestor": {
+    "cuitCuil": "20352552721",
+    "claveAfip": "Levitateme5023",
+    "representado": "EPSA PUBLISHING S A",
+    "emailNotificaciones": "nmaeso@gmail.com"
+  }
+}

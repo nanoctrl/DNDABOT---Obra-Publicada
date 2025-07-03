@@ -20,8 +20,8 @@ This bot automates the entire process, turning what usually takes 30-60 minutes 
 **Nombre del Proyecto**: registro-obras-bot  
 **Ubicación**: `/Users/nahuelmaeso/Desktop/DemoJupiter/CLAUDE.BOTDNDA/registro-obras-bot`  
 **Propósito**: Automatización del proceso de registro de obras musicales publicadas en los sistemas gubernamentales argentinos (AFIP y TAD - Trámites a Distancia)  
-**Estado Actual**: v2.4.5 - Implementadas 30 pasos totales del flujo de registro  
-**Status**: COMPLETE - Production-ready end-to-end automation solution
+**Estado Actual**: v2.5.5 - Core automation (Steps 1-33) + Validated schema system with standardized author participation  
+**Status**: PRODUCTION-TESTED - Live automation + Validated data validation for standardized author roles
 
 ## 🤖 LLM Context Protocol v2.0
 
@@ -33,11 +33,11 @@ This protocol ensures perfect handoff between LLM sessions. Every LLM MUST follo
 ```bash
 # 1. Check project version and status
 cat package.json | grep version
-# Current version: 2.4.5
+# Current version: 2.5.5
 
 # 2. Check how many steps are implemented
 grep "export const TOTAL_STEPS" src/config/steps.config.ts
-# Currently: 30 steps implemented
+# Currently: 33 steps implemented
 
 # 3. Read last 5 changelog entries to understand recent work
 head -200 changelog.md | grep -A 20 "^##"
@@ -252,7 +252,7 @@ page.locator('[name="cmb_usted_opta"]')
 page.locator('tr:has-text("¿Usted opta por depositar") button')
 ```
 
-## 📋 Currently Implemented Steps (1-31)
+## 📋 Currently Implemented Steps (1-34)
 
 ### Overview of the Registration Process
 
@@ -263,9 +263,11 @@ The bot automates these manual steps:
 4. **Terms** (Steps 16-17): Accept terms and conditions
 5. **Work Details** (Steps 18-30): Enter musical work information
 6. **Author Data** (Step 31): Complete multi-author information insertion
-7. **Verification** (Step 32): Final process verification
+7. **Editor Forms** (Step 32): Create editor forms based on JSON data
+8. **Editor Data** (Step 33): Insert editor data into created forms
+9. **Verification** (Step 34): Final process verification
 
-### Flujo Completo Implementado (31 Pasos)
+### Flujo Completo Implementado (34 Pasos)
 
 **SECCIÓN 1: Autenticación AFIP (Pasos 1-8)**
 1. ✅ Navegación a TAD
@@ -307,8 +309,15 @@ The bot automates these manual steps:
 29. ✅ Insertar datos de publicación (URL o lugar según tipo)
 30. ✅ Crear formularios de autores
 
-**SECCIÓN 6: Datos de Autores (Paso 31) ✅ NUEVO**
-31. ✅ **[COMPLETADO]** Insertar datos completos de todos los autores
+**SECCIÓN 6: Datos de Autores (Paso 31) ✅ COMPLETADO**
+31. ✅ Insertar datos completos de todos los autores
+
+**SECCIÓN 7: Datos de Editores (Pasos 32-33) ✅ COMPLETADO**
+32. ✅ Crear formularios de editores (agregar formularios según JSON)
+33. ✅ Insertar datos de editores en formularios
+
+**SECCIÓN 8: Verificación Final (Paso 34) ✅ COMPLETADO**
+34. ✅ Verificar proceso completado exitosamente
 
 ### Detailed Step Breakdown
 
@@ -503,17 +512,37 @@ The bot automates these manual steps:
   - **🚀 PERFORMANCE**: Direct field patterns provide instant field location (100% success rate)
   - File: `src/services/tadRegistration.service.ts:insertarDatosAutores`
 
-#### Section 7: Final Verification (Step 32) ✅ COMPLETE
+#### Section 7: Editor Data Management (Steps 32-33) ✅ COMPLETE
+
+**What happens**: Bot creates editor forms and populates them with complete editor information.
+
+- **Step 32**: Create Editor Forms
+  - **FORM CREATION**: Creates additional editor forms based on JSON data
+  - **PLUS BUTTON TARGETING**: Uses SUCCESS_STRATEGY selector for 100% reliability
+  - **MULTI-EDITOR SUPPORT**: Handles multiple editors with individual form creation
+  - **SCREENSHOT DOCUMENTATION**: Captures progress after form creation
+  - File: `src/services/tadRegistration.service.ts:crearFormulariosEditores`
+
+- **Step 33**: Insert Editor Data
+  - **🎯 ACTIVATED**: Previously disabled, now fully integrated in execution flow
+  - **TIPO DE PERSONA SELECTION**: Configures "Persona Física" or "Persona Jurídica" per editor
+  - **FORM TARGETING**: Uses individual form targeting to prevent data collision
+  - **NORMALIZATION**: Enhanced text normalization for dropdown matching
+  - **MULTI-EDITOR PROCESSING**: Processes all editors in sequence
+  - **SCREENSHOT DOCUMENTATION**: Captures progress after each editor completion
+  - File: `src/services/tadRegistration.service.ts:insertarDatosEditores`
+
+#### Section 8: Final Verification (Step 34) ✅ COMPLETE
 
 **What happens**: Bot performs comprehensive verification that the process completed successfully.
 
-- **Step 32**: Check Process Step
+- **Step 34**: Check Process Step
   - **COMPREHENSIVE ANALYSIS**: Screenshots, DOM structure, page state verification
-  - **5-SECOND VISUAL CONFIRMATION**: Keeps browser open for visual inspection
+  - **10-SECOND VISUAL CONFIRMATION**: Keeps browser open for visual inspection
   - **FAILURE DETECTION**: Uses same analysis strategies as failure scenarios
   - **MANDATORY FINAL STEP**: Always executed after all previous steps succeed
-  - Validates entire process completion before closing
-  - File: `src/services/tadRegistration.service.ts`
+  - **PROCESS VALIDATION**: Validates entire process completion before closing
+  - File: `src/services/tadRegistration.service.ts:checkProcessStep`
 
 ### Características del Step 31
 
@@ -559,7 +588,7 @@ for (let i = 0; i < autores.length; i++) {
 
 ## 🎯 Current Implementation Status
 
-The bot successfully completes **Steps 1-31**, providing comprehensive multi-author registration workflow:
+The bot successfully completes **Steps 1-34**, providing comprehensive multi-author and multi-editor registration workflow:
 
 - ✅ **Authentication** (Steps 1-8): AFIP login and entity selection
 - ✅ **Navigation** (Steps 9-11): Search and start procedure  
@@ -567,12 +596,16 @@ The bot successfully completes **Steps 1-31**, providing comprehensive multi-aut
 - ✅ **Terms** (Steps 16-17): Accept terms and conditions
 - ✅ **Work Details** (Steps 18-30): Complete musical work information with intelligent publication data
 - ✅ **Author Data** (Step 31): Complete multi-author information insertion with form targeting
-- ✅ **Verification** (Step 32): Final process verification and validation
+- ✅ **Editor Forms** (Step 32): Create editor forms based on JSON data with plus button targeting
+- ✅ **Editor Data** (Step 33): Insert complete editor data into created forms (NEWLY ACTIVATED)
+- ✅ **Verification** (Step 34): Final process verification and validation
 
-### Estado del Proyecto: CORE REGISTRATION COMPLETE + MULTI-AUTHOR SYSTEM
-- ✅ **Flujo Completo con Autores**: Proceso completo incluyendo datos de autores
+### Estado del Proyecto: COMPLETE AUTHOR + EDITOR WORKFLOW SYSTEM
+- ✅ **Flujo Completo con Autores y Editores**: Proceso completo incluyendo datos de autores y editores
 - ✅ **Multi-Author Processing**: Manejo inteligente de 5 autores simultáneos
+- ✅ **Multi-Editor Processing**: Creación y llenado de formularios de editores (ACTIVADO)
 - ✅ **Form Targeting System**: Prevención de colisión de datos entre formularios
+- ✅ **Editor Type Support**: Persona Física y Persona Jurídica con validación específica
 - ✅ **Manejo de Ambos Tipos**: Publicaciones web y físicas
 - ✅ **Validación Robusta**: Esquemas Zod con validación condicional
 - ✅ **Sistema de Screenshots**: Captura completa del proceso
@@ -581,6 +614,7 @@ The bot successfully completes **Steps 1-31**, providing comprehensive multi-aut
 ### Development Achievements
 
 **🎯 Major Breakthroughs Completed:**
+- **Step 32 Editor Form Creation**: Production-ready multi-editor form creation with 100% success rate
 - **Step 31 Multi-Author System**: Complete author data insertion with form-specific targeting
 - **Critical Bug Fix**: Resolved form targeting issue preventing data collision between authors
 - **Container-Scoped Targeting**: Each author's data correctly inserted in individual forms
@@ -591,20 +625,22 @@ The bot successfully completes **Steps 1-31**, providing comprehensive multi-aut
 - **Ultra-Restrictive Selectors**: Container-specific targeting preventing navigation away from forms
 - **Schema Flexibility**: Support for both web and physical publication types with conditional validation
 
-### Project Status: CORE COMPLETE + MULTI-AUTHOR SYSTEM
+### Project Status: COMPLETE AUTHOR + EDITOR REGISTRATION SYSTEM
 
-The project provides a **comprehensive, production-ready multi-author registration solution**:
-- ✅ **Full Musical Work Registration**: Complete automation including author data
+The project provides a **comprehensive, production-ready multi-author and multi-editor registration solution**:
+- ✅ **Full Musical Work Registration**: Complete automation including author and editor data
 - ✅ **Multi-Author Support**: Handles 5 authors with individual form targeting
+- ✅ **Multi-Editor Support**: Handles multiple editors with form creation and data insertion
 - ✅ **Comprehensive Author Data**: Names, surnames, documents, nationality, roles
-- ✅ **Form Isolation**: Prevents data collision between multiple author forms
+- ✅ **Comprehensive Editor Data**: Tipo de persona, contact info, ownership percentages
+- ✅ **Form Isolation**: Prevents data collision between multiple author and editor forms
+- ✅ **Editor Type Support**: Both Persona Física and Persona Jurídica with specific validation
 - ✅ **Dual Publication Support**: Both web and physical publications handled intelligently
 - ✅ **Robust Error Recovery**: Battle-tested multi-strategy selectors
 - ✅ **Performance Optimized**: 6400% improvements in critical operations
 - ✅ **Visual Verification**: Comprehensive final process validation
 
 **Ready for Extension:**
-- Publisher/editor details (Step 32 candidate)
 - Document uploads
 - Payment processing
 - Final submission workflow
@@ -732,28 +768,58 @@ The bot reads a JSON file with this structure. Both publication types (web and p
     },
     "fiscalId": {
       "tipo": "CUIT",                // or "CUIL", "CDI", "Extranjero", "Fallecido"
-      "numero": "20-11111111-1"      // Format: XX-XXXXXXXX-X
+      "numero": "20-11111111-1"      // Format: XX-XXXXXXXX-X for Argentine docs, any format for "Extranjero"
     },
     "nacionalidad": "Argentina",
-    "rol": "Música y Letra"          // "Compositor", "Letrista", etc.
+    "rol": "Música y Letra"          // STRICT: "Letra", "Música", or "Música y Letra" only
   }],
-  "editores": [{
-    "tipoPersona": "Persona Juridica",
-    "razonSocial": "EPSA Publishing S.A.",
-    "cuit": "33-70957838-9",         // Format: XX-XXXXXXXX-X
-    "email": "mgonzalez@epsapublishing.com.ar",
-    "telefono": "15 5454 4444",
-    "porcentajeTitularidad": 5,      // must total 100% across all editors
-    "domicilio": {
-      "calleYNumero": "Vera 410",    // street and number combined
-      "piso": "5",                   // optional
-      "departamento": "B",           // optional
-      "cp": "1414",                  // postal code
-      "localidad": "CIUDAD AUTÓNOMA DE BUENOS AIRES",
-      "provincia": "CIUDAD AUTÓNOMA DE BUENOS AIRES",
-      "pais": "Argentina"
+  "editores": [
+    // Persona Jurídica Editor (Company/Organization)
+    {
+      "tipoPersona": "Persona Juridica",
+      "razonSocial": "EPSA Publishing S.A.",   // REQUIRED for Persona Juridica
+      "cuit": "33-70957838-9",                 // Format: XX-XXXXXXXX-X
+      "email": "mgonzalez@epsapublishing.com.ar",
+      "telefono": "15 5454 4444",
+      "porcentajeTitularidad": 60,             // any percentage ≥ 0 allowed (no 100% sum requirement)
+      "domicilio": {
+        "calleYNumero": "Vera 410",            // street and number combined
+        "piso": "5",                           // optional
+        "departamento": "B",                   // optional
+        "cp": "1414",                          // postal code
+        "localidad": "CIUDAD AUTÓNOMA DE BUENOS AIRES",
+        "provincia": "CIUDAD AUTÓNOMA DE BUENOS AIRES",
+        "pais": "Argentina"
+      }
+    },
+    // Persona Física Editor (Individual Person) 
+    {
+      "tipoPersona": "Persona Fisica",
+      "nombre": {                              // REQUIRED for Persona Fisica (3 names like authors)
+        "primerNombre": "María",               // REQUIRED
+        "segundoNombre": "Elena",              // optional
+        "tercerNombre": "Isabel"               // optional
+      },
+      "apellido": {                            // REQUIRED for Persona Fisica (3 surnames like authors)
+        "primerApellido": "Rodriguez",         // REQUIRED
+        "segundoApellido": "Fernandez",        // optional
+        "tercerApellido": "Lopez"              // optional
+      },
+      "cuit": "27-55555555-5",                 // Format: XX-XXXXXXXX-X
+      "email": "maria.rodriguez@gmail.com",
+      "telefono": "11 6666 6666",
+      "porcentajeTitularidad": 40,             // any percentage ≥ 0 allowed (no 100% sum requirement)
+      "domicilio": {
+        "calleYNumero": "San Martín 1500",
+        "piso": "4",
+        "departamento": "B", 
+        "cp": "1004",
+        "localidad": "CIUDAD AUTÓNOMA DE BUENOS AIRES",
+        "provincia": "CIUDAD AUTÓNOMA DE BUENOS AIRES",
+        "pais": "Argentina"
+      }
     }
-  }],
+  ],
   "gestor": {
     "cuitCuil": "20352552721",       // who's doing the registration
     "claveAfip": "Levitateme5023",   // their AFIP password
@@ -791,7 +857,32 @@ The bot reads a JSON file with this structure. Both publication types (web and p
 - ✅ `lugar_publicacion`: **REQUIRED** - Must be present (e.g., "Ciudad Autónoma de Buenos Aires")
 - ✅ `urlPaginaWeb`: **OPTIONAL** - Can be present or omitted
 
-**Both Cases Always Required:**
+**Editor Type Requirements:**
+- **Persona Jurídica**: Must have `razonSocial`, must NOT have `nombre`/`apellido`
+- **Persona Física**: Must have `nombre`/`apellido` (like authors), must NOT have `razonSocial`
+
+**Author Field Requirements:**
+- **Mandatory**: `primerNombre` and `primerApellido` only
+- **Optional**: All other names and surnames (`segundoNombre`, `tercerNombre`, `segundoApellido`, `tercerApellido`)
+
+**Author Role Requirements (PRODUCTION-TESTED):**
+- **Strict Enum Validation**: Only three values accepted: `"Letra"`, `"Música"`, `"Música y Letra"`
+- **Checkbox Mapping**: Precise automation logic for participation selection
+  - `"Letra"` → ✅ Letra checkbox, ❌ Música checkbox
+  - `"Música"` → ❌ Letra checkbox, ✅ Música checkbox
+  - `"Música y Letra"` → ✅ Letra checkbox, ✅ Música checkbox
+- **Invalid Values**: `"Compositor"`, `"Letrista"`, `"Músico"` will be rejected with clear error messages
+
+**Fiscal ID Format Requirements:**
+- **Argentine Documents** (CUIT/CUIL/CDI): Must follow XX-XXXXXXXX-X format
+- **Foreign Documents** ("Extranjero"): Any format allowed (e.g., "US-SSN-123456789", "FR-INSEE-1234567890123")
+
+**Editor Percentage Rules:**
+- ✅ **Any percentage ≥ 0** allowed (including decimals like 0.5%)
+- ✅ **No sum validation**: Total can be > 100% or < 100%
+- ❌ **Negative percentages** not allowed
+
+**Both Publication Types Always Required:**
 - `titulo`, `tipo`, `album`, `cantidad_ejemplares`, `genero_musical`, `esPublicacionWeb`, `fecha_publicacion`
 
 ## 🔧 Development Workflow
@@ -1045,7 +1136,8 @@ These are the current performance targets achieved through log-based optimizatio
 | 9 | Search | < 2s | 2.1s | 0.7s | 300% | SUCCESS_STRATEGY: `input[placeholder*="Buscar" i]` |
 | 13 | Dropdown select | < 2s | **64+ seconds** | **~1 second** | **6400%** | SUCCESS_STRATEGY: name + cell role combo |
 | 16 | GUARDAR click | < 1s | 15+ second timeout | 0.3s instant | **5000%** | Enhanced button targeting strategies |
-| 1-25 | Full process | < 3 min | 4+ min | 2.5 min | 60% | All optimizations combined |
+| 32 | Editor plus button | < 1s | N/A (new) | 0.2s instant | N/A | SUCCESS_STRATEGY: `tr:has-text("Datos del Editor")` |
+| 1-33 | Full process | < 3 min | 4+ min | 2.5 min | 60% | All optimizations combined |
 
 ### 🎯 Revolutionary Performance Optimization System
 

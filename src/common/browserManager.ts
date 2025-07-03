@@ -134,9 +134,9 @@ export async function closeBrowser(browserManager: BrowserManager): Promise<void
     }
   }
   
-  // Wait 5 seconds before closing browser to allow visual verification
-  logger.info('Esperando 5 segundos antes de cerrar el navegador...');
-  await new Promise(resolve => setTimeout(resolve, 5000));
+  // Wait 10 seconds before closing browser to allow visual verification
+  logger.info('Esperando 10 segundos antes de cerrar el navegador...');
+  await new Promise(resolve => setTimeout(resolve, 10000));
   
   // Cerrar navegador
   if (browser) {

@@ -1,0 +1,84 @@
+{
+  "obra": {
+    "titulo": "Test Percentage Flexibility",
+    "tipo": "Música y letra",
+    "album": false,
+    "cantidad_ejemplares": 500,
+    "genero_musical": "Electronic",
+    "esPublicacionWeb": true,
+    "urlPaginaWeb": "https://music.example.com/test-percentage",
+    "lugar_publicacion": "Ciudad Autónoma de Buenos Aires",
+    "fecha_publicacion": "10-07-2025"
+  },
+  "autores": [
+    {
+      "nombre": { "primerNombre": "Test" },
+      "apellido": { "primerApellido": "Author" },
+      "fiscalId": { "tipo": "CUIT", "numero": "20-12345678-9" },
+      "nacionalidad": "Argentina",
+      "rol": "Música y Letra"
+    }
+  ],
+  "editores": [
+    {
+      "tipoPersona": "Persona Juridica",
+      "razonSocial": "Editorial Mayor S.A.",
+      "cuit": "33-11111111-1",
+      "email": "mayor@editorial.com.ar",
+      "telefono": "11 1111 1111",
+      "porcentajeTitularidad": 150,
+      "domicilio": {
+        "calleYNumero": "Test Street 100",
+        "cp": "1000",
+        "localidad": "CIUDAD AUTÓNOMA DE BUENOS AIRES",
+        "provincia": "CIUDAD AUTÓNOMA DE BUENOS AIRES",
+        "pais": "Argentina"
+      }
+    },
+    {
+      "tipoPersona": "Persona Fisica",
+      "nombre": {
+        "primerNombre": "Independent",
+        "segundoNombre": "Music",
+        "tercerNombre": ""
+      },
+      "apellido": {
+        "primerApellido": "Publisher",
+        "segundoApellido": "",
+        "tercerApellido": ""
+      },
+      "cuit": "27-22222222-2",
+      "email": "independent@music.com",
+      "telefono": "11 2222 2222",
+      "porcentajeTitularidad": 75,
+      "domicilio": {
+        "calleYNumero": "Independent Ave 200",
+        "cp": "1100",
+        "localidad": "CIUDAD AUTÓNOMA DE BUENOS AIRES",
+        "provincia": "CIUDAD AUTÓNOMA DE BUENOS AIRES",
+        "pais": "Argentina"
+      }
+    },
+    {
+      "tipoPersona": "Persona Juridica",
+      "razonSocial": "Micro Publishing Ltd.",
+      "cuit": "30-33333333-3",
+      "email": "micro@publishing.com.ar",
+      "telefono": "11 3333 3333",
+      "porcentajeTitularidad": 0.5,
+      "domicilio": {
+        "calleYNumero": "Micro St 300",
+        "cp": "1200",
+        "localidad": "CIUDAD AUTÓNOMA DE BUENOS AIRES",
+        "provincia": "CIUDAD AUTÓNOMA DE BUENOS AIRES",
+        "pais": "Argentina"
+      }
+    }
+  ],
+  "gestor": {
+    "cuitCuil": "20352552721",
+    "claveAfip": "Levitateme5023",
+    "representado": "EPSA PUBLISHING S A",
+    "emailNotificaciones": "nmaeso@gmail.com"
+  }
+}

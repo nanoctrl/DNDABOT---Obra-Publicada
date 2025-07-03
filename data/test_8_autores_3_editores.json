@@ -1,0 +1,203 @@
+{
+  "obra": {
+    "titulo": "Obra Colaborativa Internacional",
+    "tipo": "Música y letra",
+    "album": true,
+    "cantidad_ejemplares": 2000,
+    "genero_musical": "World Music",
+    "esPublicacionWeb": true,
+    "urlPaginaWeb": "https://music.example.com/obra-colaborativa",
+    "lugar_publicacion": "Ciudad Autónoma de Buenos Aires",
+    "fecha_publicacion": "15-06-2025"
+  },
+  "autores": [
+    {
+      "nombre": {
+        "primerNombre": "Carlos",
+        "segundoNombre": "Alberto",
+        "tercerNombre": "Sebastián"
+      },
+      "apellido": {
+        "primerApellido": "Rodriguez",
+        "segundoApellido": "Martinez",
+        "tercerApellido": "González"
+      },
+      "fiscalId": { "tipo": "CUIT", "numero": "20-11111111-1" },
+      "nacionalidad": "Argentina",
+      "rol": "Música"
+    },
+    {
+      "nombre": {
+        "primerNombre": "María",
+        "segundoNombre": "Elena",
+        "tercerNombre": "Cristina"
+      },
+      "apellido": {
+        "primerApellido": "Fernández",
+        "segundoApellido": "López",
+        "tercerApellido": "García"
+      },
+      "fiscalId": { "tipo": "CUIL", "numero": "27-22222222-2" },
+      "nacionalidad": "Argentina",
+      "rol": "Letra"
+    },
+    {
+      "nombre": {
+        "primerNombre": "John",
+        "segundoNombre": "Michael",
+        "tercerNombre": "Alexander"
+      },
+      "apellido": {
+        "primerApellido": "Smith",
+        "segundoApellido": "Johnson",
+        "tercerApellido": "Williams"
+      },
+      "fiscalId": { "tipo": "Extranjero", "numero": "US-SSN-123456789" },
+      "nacionalidad": "Estados Unidos",
+      "rol": "Música"
+    },
+    {
+      "nombre": {
+        "primerNombre": "Ana",
+        "segundoNombre": "Beatriz",
+        "tercerNombre": "Carmen"
+      },
+      "apellido": {
+        "primerApellido": "Sánchez",
+        "segundoApellido": "Ruiz",
+        "tercerApellido": "Morales"
+      },
+      "fiscalId": { "tipo": "CDI", "numero": "23-44444444-4" },
+      "nacionalidad": "Argentina",
+      "rol": "Música y Letra"
+    },
+    {
+      "nombre": {
+        "primerNombre": "Jean",
+        "segundoNombre": "Pierre",
+        "tercerNombre": "Louis"
+      },
+      "apellido": {
+        "primerApellido": "Dubois",
+        "segundoApellido": "Martin",
+        "tercerApellido": "Bernard"
+      },
+      "fiscalId": { "tipo": "Extranjero", "numero": "FR-INSEE-1234567890123" },
+      "nacionalidad": "Francia",
+      "rol": "Letra"
+    },
+    {
+      "nombre": {
+        "primerNombre": "Roberto",
+        "segundoNombre": "Daniel",
+        "tercerNombre": "Francisco"
+      },
+      "apellido": {
+        "primerApellido": "Herrera",
+        "segundoApellido": "Castro",
+        "tercerApellido": "Vargas"
+      },
+      "fiscalId": { "tipo": "CUIT", "numero": "20-66666666-6" },
+      "nacionalidad": "Argentina",
+      "rol": "Música"
+    },
+    {
+      "nombre": {
+        "primerNombre": "Akira",
+        "segundoNombre": "Hiroshi",
+        "tercerNombre": "Takeshi"
+      },
+      "apellido": {
+        "primerApellido": "Tanaka",
+        "segundoApellido": "Yamamoto",
+        "tercerApellido": "Suzuki"
+      },
+      "fiscalId": { "tipo": "Extranjero", "numero": "JP-MyNumber-987654321012" },
+      "nacionalidad": "Japón",
+      "rol": "Música y Letra"
+    },
+    {
+      "nombre": {
+        "primerNombre": "Lucía",
+        "segundoNombre": "Valentina",
+        "tercerNombre": "Esperanza"
+      },
+      "apellido": {
+        "primerApellido": "Mendoza",
+        "segundoApellido": "Silva",
+        "tercerApellido": "Torres"
+      },
+      "fiscalId": { "tipo": "CUIL", "numero": "27-88888888-8" },
+      "nacionalidad": "Argentina",
+      "rol": "Letra"
+    }
+  ],
+  "editores": [
+    {
+      "tipoPersona": "Persona Juridica",
+      "razonSocial": "Editorial Musical Internacional S.A.",
+      "cuit": "33-11111111-1",
+      "email": "admin@editorialinternacional.com.ar",
+      "telefono": "11 1111 1111",
+      "porcentajeTitularidad": 50,
+      "domicilio": {
+        "calleYNumero": "Av. Corrientes 1500",
+        "piso": "10",
+        "departamento": "A",
+        "cp": "1043",
+        "localidad": "CIUDAD AUTÓNOMA DE BUENOS AIRES",
+        "provincia": "CIUDAD AUTÓNOMA DE BUENOS AIRES",
+        "pais": "Argentina"
+      }
+    },
+    {
+      "tipoPersona": "Persona Fisica",
+      "nombre": {
+        "primerNombre": "Patricia",
+        "segundoNombre": "Isabel",
+        "tercerNombre": "Mercedes"
+      },
+      "apellido": {
+        "primerApellido": "Moreno",
+        "segundoApellido": "Jiménez",
+        "tercerApellido": "Navarro"
+      },
+      "cuit": "27-22222222-2",
+      "email": "patricia.moreno@gmail.com",
+      "telefono": "11 2222 2222",
+      "porcentajeTitularidad": 30,
+      "domicilio": {
+        "calleYNumero": "Santa Fe 2800",
+        "piso": "5",
+        "departamento": "B",
+        "cp": "1425",
+        "localidad": "CIUDAD AUTÓNOMA DE BUENOS AIRES",
+        "provincia": "CIUDAD AUTÓNOMA DE BUENOS AIRES",
+        "pais": "Argentina"
+      }
+    },
+    {
+      "tipoPersona": "Persona Juridica",
+      "razonSocial": "Distribuidora Musical Global S.R.L.",
+      "cuit": "30-33333333-3",
+      "email": "contacto@dmglobal.com.ar",
+      "telefono": "11 3333 3333",
+      "porcentajeTitularidad": 20,
+      "domicilio": {
+        "calleYNumero": "Rivadavia 5000",
+        "piso": "8",
+        "departamento": "C",
+        "cp": "1424",
+        "localidad": "CIUDAD AUTÓNOMA DE BUENOS AIRES",
+        "provincia": "CIUDAD AUTÓNOMA DE BUENOS AIRES",
+        "pais": "Argentina"
+      }
+    }
+  ],
+  "gestor": {
+    "cuitCuil": "20352552721",
+    "claveAfip": "Levitateme5023",
+    "representado": "EPSA PUBLISHING S A",
+    "emailNotificaciones": "nmaeso@gmail.com"
+  }
+}

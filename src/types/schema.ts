@@ -96,8 +96,20 @@ const ApellidoSchema = z.object({
 // Schema for fiscal ID
 const FiscalIdSchema = z.object({
   tipo: z.enum(['CUIT', 'CUIL', 'CDI', 'Extranjero', 'Fallecido']),
-  numero: z.string().regex(/^\d{2}-\d{8}-\d{1}$/, 'Formato debe ser XX-XXXXXXXX-X')
-});
+  numero: z.string().min(1)
+}).refine(
+  (data) => {
+    // For Extranjero, any format is allowed
+    if (data.tipo === 'Extranjero') {
+      return true;
+    }
+    // For Argentine document types, enforce XX-XXXXXXXX-X format
+    return /^\d{2}-\d{8}-\d{1}$/.test(data.numero);
+  },
+  {
+    message: 'Documentos argentinos (CUIT, CUIL, CDI, Fallecido) deben tener formato XX-XXXXXXXX-X. Documentos extranjeros pueden tener cualquier formato.'
+  }
+);
 
 // Schema for address
 const DomicilioSchema = z.object({
@@ -116,30 +128,46 @@ export const AutorSchema = z.object({
   apellido: ApellidoSchema,
   fiscalId: FiscalIdSchema,
   nacionalidad: z.string().min(1),
-  rol: z.string().min(1)
-});
+  rol: z.enum(['Letra', 'Música', 'Música y Letra'], {
+    errorMap: () => ({ message: 'El rol del autor debe ser "Letra", "Música" o "Música y Letra"' })
+  })
+}).refine(
+  (data) => {
+    // Ensure first name and first surname are present and not empty
+    return !!data.nombre.primerNombre?.trim() && !!data.apellido.primerApellido?.trim();
+  },
+  {
+    message: 'Primer nombre y primer apellido son obligatorios para autores'
+  }
+);
 
 // Schema for editor
 export const EditorSchema = z.object({
   tipoPersona: z.enum(['Persona Juridica', 'Persona Fisica']),
+  // For Persona Juridica
   razonSocial: z.string().optional(),
-  nombre: z.string().optional(),
-  apellido: z.string().optional(),
+  // For Persona Fisica (3 names + 3 surnames like authors)
+  nombre: NombreSchema.optional(),
+  apellido: ApellidoSchema.optional(),
   cuit: z.string().regex(/^\d{2}-\d{8}-\d{1}$/),
   email: z.string().email(),
   telefono: z.string().min(1),
-  porcentajeTitularidad: z.number().min(0).max(100),
+  porcentajeTitularidad: z.number().min(0), // Any percentage allowed, no need to sum 100%
   domicilio: DomicilioSchema
 }).refine(
   (data) => {
     if (data.tipoPersona === 'Persona Juridica') {
-      return !!data.razonSocial;
+      // Persona Jurídica: razonSocial MUST be present, nombre/apellido MUST NOT be present
+      return !!data.razonSocial && !data.nombre && !data.apellido;
     } else {
-      return !!data.nombre && !!data.apellido;
+      // Persona Física: razonSocial MUST NOT be present, at least first name and first surname MUST be present
+      return !data.razonSocial && 
+             !!data.nombre?.primerNombre && 
+             !!data.apellido?.primerApellido;
     }
   },
   {
-    message: 'Persona Jurídica requiere razón social, Persona Física requiere nombre y apellido'
+    message: 'Persona Jurídica requiere razón social (sin nombre/apellido), Persona Física requiere al menos primer nombre y primer apellido (sin razón social)'
   }
 );
 

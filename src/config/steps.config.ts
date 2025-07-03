@@ -272,6 +272,22 @@ export const STEP_DEFINITIONS: StepDefinition[] = [
   },
   {
     number: 32,
+    name: 'crear_formularios_editores',
+    description: 'Crear formularios de editores (agregar formularios según JSON)',
+    service: 'obra',
+    required: true,
+    retryable: true
+  },
+  {
+    number: 33,
+    name: 'insertar_datos_editores',
+    description: 'Insertar Datos Editores',
+    service: 'tad',
+    required: true,
+    retryable: true
+  },
+  {
+    number: 34,
     name: 'check_process_step',
     description: 'Verificar proceso completado exitosamente',
     service: 'obra',

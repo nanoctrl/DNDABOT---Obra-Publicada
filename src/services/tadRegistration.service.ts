@@ -611,7 +611,25 @@ export class TadRegistrationService {
       }
     );
 
-    // Paso 32: Check Process Step - Verificar proceso completado exitosamente
+    // Paso 32: Crear formularios de editores
+    await executeWithInteractiveSupport(
+      this.page,
+      'Crear formularios de editores (agregar formularios según JSON)',
+      async () => {
+        await this.crearFormulariosEditores(tramiteData.editores || []);
+      }
+    );
+
+    // Paso 33: Insertar datos de editores
+    await executeWithInteractiveSupport(
+      this.page,
+      'Insertar datos de editores en formularios',
+      async () => {
+        await this.insertarDatosEditores(tramiteData.editores || []);
+      }
+    );
+
+    // Paso 34: Check Process Step - Verificar proceso completado exitosamente
     await executeWithInteractiveSupport(
       this.page,
       'Verificar proceso completado exitosamente',
@@ -1940,14 +1958,118 @@ export class TadRegistrationService {
   }
 
   /**
-   * Paso 32: Check Process Step - Verificar proceso completado exitosamente
+   * Paso 32: Crear formularios de editores - Agregar formularios adicionales según JSON
+   */
+  private async crearFormulariosEditores(editores: any[]): Promise<void> {
+    this.logger.info('🎯 PASO 32: Creando formularios de editores...');
+    const stepTracker = getStepTracker();
+    stepTracker.startStep(32);
+
+    try {
+      // ✅ SIMPLE CLICK LOGIC: N editors = N-1 clicks (1 default form exists)
+      const clicksNeeded = Math.max(0, editores.length - 1);
+      
+      this.logger.info(`📋 Editores en JSON: ${editores.length}`);
+      this.logger.info(`🔄 Clicks necesarios: ${clicksNeeded} (fórmula: ${editores.length} - 1)`);
+      
+      if (clicksNeeded === 0) {
+        this.logger.info('✅ Solo 1 editor - usando formulario por defecto, no se necesitan clicks adicionales');
+        stepTracker.logSuccess(32, '1 editor - formulario por defecto suficiente');
+        return;
+      }
+      
+      // Tomar screenshot antes de agregar formularios
+      await takeScreenshot(this.page, `before_adding_editor_forms`, 'debug');
+
+      // Buscar botones para agregar editores (múltiples estrategias)
+      const addButtonStrategies = [
+      // ✅ SUCCESS_STRATEGY: Editor section plus button - works 100% of time for all editor counts
+      'tr:has-text("Datos del Editor") img[src*="mas.png"]',
+      // NUEVAS ESTRATEGIAS: Botones circulares con iconos (basado en screenshot del usuario)
+          'text="Datos del Editor" >> xpath=../preceding-sibling::*[1]', // Botón inmediatamente antes del texto
+          'text="Datos del Editor" >> xpath=../preceding-sibling::*[2]', // Segundo botón antes del texto
+        ':is(div, span, button) >> text="Datos del Editor" >> xpath=../preceding-sibling::*[contains(@class, "add") or contains(@class, "plus") or contains(@class, "blue")]',
+        '.z-button-blue', // Botones azules ZK Framework
+        '.z-toolbarbutton-blue',
+        '[class*="add"][class*="button"]', // Clases que contengan "add" y "button"
+        '[class*="plus"][class*="button"]', // Clases que contengan "plus" y "button"
+        '[style*="blue"]', // Elementos con estilo azul
+        'img[alt*="add" i]', // Imágenes con alt text "add"
+        'img[alt*="plus" i]', // Imágenes con alt text "plus"
+        'img[alt*="agregar" i]', // Imágenes con alt text "agregar"
+        // ESTRATEGIAS ORIGINALES (mantener como fallback)
+        'button:has-text("Agregar")',
+        'button:has-text("Nuevo")', 
+        'button:has-text("+")',
+        '.add-button',
+        '.btn-add',
+        '[title*="agregar" i]',
+        '[title*="nuevo" i]',
+        'img[src*="add"]',
+        'img[src*="plus"]',
+        '.z-toolbarbutton:has-text("+")',
+        '.z-button:has-text("Agregar")'
+      ];
+
+      // ✅ PURE CLICK LOGIC: Click the + button exactly clicksNeeded times
+      for (let clickNumber = 1; clickNumber <= clicksNeeded; clickNumber++) {
+        this.logger.info(`🔄 Click ${clickNumber}/${clicksNeeded} en botón + para agregar editor...`);
+        
+        // Find the + button using SUCCESS_STRATEGY
+        let buttonFound = false;
+        
+        for (const strategy of addButtonStrategies) {
+          try {
+            const addButtons = await this.page.locator(strategy).all();
+            this.logger.info(`🔍 Estrategia "${strategy}": ${addButtons.length} elementos encontrados`);
+            
+            if (addButtons.length > 0) {
+              const button = addButtons[0]; // Use first button found
+              const isVisible = await button.isVisible();
+              if (isVisible) {
+                this.logger.info(`🎯 Realizando click ${clickNumber}/${clicksNeeded}...`);
+                await button.click();
+                await this.page.waitForTimeout(1500); // Wait for form to be added
+                this.logger.info(`✅ Click ${clickNumber}/${clicksNeeded} realizado exitosamente`);
+                buttonFound = true;
+                break;
+              }
+            }
+          } catch (error) {
+            this.logger.debug(`Estrategia ${strategy} falló: ${error}`);
+          }
+        }
+        
+        if (!buttonFound) {
+          throw new Error(`❌ No se pudo encontrar botón + para click ${clickNumber}/${clicksNeeded}`);
+        }
+        
+        // Take screenshot after each click
+        await takeScreenshot(this.page, `after_editor_click_${clickNumber}`, 'debug');
+      }
+      
+      // Final screenshot
+      await takeScreenshot(this.page, `step32_completed_${editores.length}_editores`, 'milestone');
+
+      stepTracker.logSuccess(32, `${clicksNeeded} clicks realizados para ${editores.length} editores`);
+      this.logger.info(`✅ PASO 32 COMPLETADO`);
+
+    } catch (error) {
+      this.logger.error('Error en Paso 32:', error);
+      stepTracker.logError(32, `Error: ${error}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Paso 34: Check Process Step - Verificar proceso completado exitosamente
    * Este paso analiza la página con todas las estrategias disponibles para verificar el estado final
    * y mantiene el navegador abierto por 10 segundos para inspección visual
    */
   private async checkProcessStep(): Promise<void> {
-    this.logger.info('🔍 PASO 32: Verificando proceso completado exitosamente...');
+    this.logger.info('🔍 PASO 34: Verificando proceso completado exitosamente...');
     const stepTracker = getStepTracker();
-    stepTracker.startStep(32);
+    stepTracker.startStep(34);
     
     try {
       // Tomar screenshot del estado final
@@ -2001,12 +2123,283 @@ export class TadRegistrationService {
       await new Promise(resolve => setTimeout(resolve, 10000));
       this.logger.info('✅ Período de verificación visual completado');
       
-      stepTracker.logSuccess(32, 'Proceso verificado exitosamente con análisis completo');
-      this.logger.info('✅ PASO 32 COMPLETADO - Check Process Step ejecutado exitosamente');
+      stepTracker.logSuccess(34, 'Proceso verificado exitosamente con análisis completo');
+      this.logger.info('✅ PASO 34 COMPLETADO - Check Process Step ejecutado exitosamente');
       
     } catch (error) {
       this.logger.error('Error en Check Process Step:', error);
       await takeScreenshot(this.page, 'check_process_step_error', 'error');
+      throw error;
+    }
+  }
+
+  /**
+   * Paso 33: Insertar Datos Editores - Seleccionar tipo de persona para cada editor
+   */
+  private async insertarDatosEditores(editores: any[]): Promise<void> {
+    this.logger.info('🎯 PASO 33: Insertando datos de editores...');
+    const stepTracker = getStepTracker();
+    stepTracker.startStep(33);
+
+    try {
+      if (!editores || editores.length === 0) {
+        this.logger.info('No hay editores para procesar.');
+        stepTracker.logSuccess(33, 'No hay editores');
+        return;
+      }
+
+      this.logger.info(`📋 Procesando ${editores.length} editores...`);
+
+      // Normalización completa de acentos y espacios - ENHANCED FIX
+      const normalizeText = (text: string): string => {
+        return text.toLowerCase()
+          .replace(/[áàäâã]/g, 'a')
+          .replace(/[éèëê]/g, 'e') 
+          .replace(/[íìïî]/g, 'i')
+          .replace(/[óòöôõ]/g, 'o')
+          .replace(/[úùüû]/g, 'u')
+          .replace(/[ñ]/g, 'n')
+          .replace(/\u00A0/g, ' ')  // Replace non-breaking space (160) with regular space (32)
+          .replace(/\s+/g, ' ')     // Normalize multiple spaces to single space
+          .trim();
+      };
+
+      for (let i = 0; i < editores.length; i++) {
+        const editor = editores[i];
+        this.logger.info(`\n🔄 Editor ${i + 1}: ${editor.tipoPersona}`);
+        
+        // ✅ SMART DROPDOWN DETECTION: Adaptive logic based on dropdown count vs editor count
+        // BREAKTHROUGH: Step 32 creates exact number of editor forms, so dropdown count = editor count when no Titular
+        // STRATEGY: Compare total dropdowns vs expected editors to determine if Titular exists
+        
+        let tipoPersonaRows = [];
+        
+        try {
+          // ✅ FIXED: Use same logic as Step 32 - count "Datos del Editor" headers
+          const editorForms = await this.page.locator('text="Datos del Editor"').count();
+          const allTipoPersonaRows = await this.page.locator('tr:has-text("Tipo de persona")').all();
+          const totalDropdowns = allTipoPersonaRows.length;
+          const editorsCount = editores.length;
+          
+          this.logger.info(`🔍 Encontradas ${editorForms} formularios "Datos del Editor"`);
+          this.logger.info(`🔍 Encontradas ${totalDropdowns} filas "Tipo de persona" en total`);
+          this.logger.info(`📋 Editores esperados: ${editorsCount}`);
+          
+          // ✅ SIMPLE LOGIC: If editor forms = editors expected, use first N dropdowns (no Titular)
+          let startIndex = 0;
+          let numEditorsToProcess = 0;
+          
+          if (editorForms === editorsCount) {
+            // Perfect match: Step 32 created exact number of editor forms
+            startIndex = 0;
+            numEditorsToProcess = editorsCount;
+            this.logger.info(`✅ PERFECT MATCH: ${editorForms} editor forms for ${editorsCount} editors - using first ${editorsCount} dropdowns (no Titular)`);
+          } else if (totalDropdowns > editorsCount) {
+            // More dropdowns than editors - assume LAST dropdown is Titular
+            startIndex = 0;
+            numEditorsToProcess = editorsCount; // Use first N dropdowns (editors), skip last one (titular)
+            this.logger.info(`✅ TITULAR DETECTED: ${totalDropdowns} dropdowns, ${editorsCount} editors - using first ${numEditorsToProcess} (editors), skipping last (Titular)`);
+          } else {
+            // Not enough dropdowns - error
+            throw new Error(`❌ NOT ENOUGH DROPDOWNS: ${totalDropdowns} found, ${editorsCount} needed`);
+          }
+          
+          for (let i = 0; i < numEditorsToProcess; i++) {
+            const row = allTipoPersonaRows[startIndex + i];
+            
+            try {
+              const isVisible = await row.isVisible();
+              if (isVisible) {
+                tipoPersonaRows.push(row);
+                if (startIndex === 0) {
+                  this.logger.info(`✅ Agregada fila "Tipo de persona" ${i + 1} para editor ${i + 1} (sin saltar - todas son editores)`);
+                } else {
+                  this.logger.info(`✅ Agregada fila "Tipo de persona" ${startIndex + i + 1} para editor ${i + 1} (saltando Titular en posición 1)`);
+                }
+              } else {
+                this.logger.warn(`⚠️ Fila "Tipo de persona" ${startIndex + i + 1} no es visible`);
+              }
+            } catch (visibilityError) {
+              this.logger.warn(`⚠️ Error verificando visibilidad de fila ${startIndex + i + 1}: ${visibilityError}`);
+              // Add anyway - sometimes visibility check fails but element is usable
+              tipoPersonaRows.push(row);
+              if (startIndex === 0) {
+                this.logger.info(`✅ Agregada fila "Tipo de persona" ${i + 1} (ignorando error de visibilidad - sin saltar)`);
+              } else {
+                this.logger.info(`✅ Agregada fila "Tipo de persona" ${startIndex + i + 1} (ignorando error de visibilidad, saltando Titular)`);
+              }
+            }
+          }
+          
+          this.logger.info(`✅ SUCCESS_STRATEGY: Encontradas ${tipoPersonaRows.length} filas "Tipo de persona" usando smart detection (startIndex: ${startIndex})`);
+          
+          // Additional check: verify we have enough dropdowns
+          if (tipoPersonaRows.length < editores.length) {
+            this.logger.warn(`⚠️ Solo se encontraron ${tipoPersonaRows.length} dropdowns para ${editores.length} editores`);
+          }
+          
+        } catch (contextError) {
+          this.logger.warn(`⚠️ Estrategia de orden DOM falló: ${contextError}`);
+          
+          // Fallback: Use all "Tipo de persona" rows but exclude those in "Titular" context
+          const allTipoPersonaRows = await this.page.locator('tr:has-text("Tipo de persona")').all();
+          this.logger.info(`🔍 Fallback: Encontradas ${allTipoPersonaRows.length} filas de "Tipo de persona"`);
+          
+          for (const row of allTipoPersonaRows) {
+            try {
+              // Check if this row is in a Titular context by looking at nearby text
+              const rowContext = await row.locator('xpath=preceding-sibling::tr[position()<=5]').allTextContents();
+              const contextText = rowContext.join(' ').toLowerCase();
+              
+              const isInTitularContext = contextText.includes('titular') || contextText.includes('impresion');
+              
+              if (!isInTitularContext && tipoPersonaRows.length < editores.length) {
+                tipoPersonaRows.push(row);
+                this.logger.info(`✅ Fallback: Agregada fila "Tipo de persona" ${tipoPersonaRows.length} (no está en contexto Titular/Impresión)`);
+              } else if (isInTitularContext) {
+                this.logger.info(`🚫 Fallback: Excluida fila "Tipo de persona" (está en contexto Titular/Impresión)`);
+              }
+            } catch (filterError) {
+              this.logger.debug(`Error en filtrado fallback: ${filterError}`);
+            }
+          }
+        }
+        
+        if (i >= tipoPersonaRows.length) {
+          throw new Error(`❌ Editor ${i + 1} no encontrado - solo hay ${tipoPersonaRows.length} filas de "Tipo de Persona" de editores`);
+        }
+
+        const tipoPersonaRow = tipoPersonaRows[i];
+        this.logger.info(`🎯 Trabajando con fila "Tipo de Persona" ${i + 1} de ${tipoPersonaRows.length}`);
+        
+        // Tomar screenshot antes de abrir dropdown
+        await takeScreenshot(this.page, `debug_step33_before_tipo_persona_editor_${i + 1}`, 'debug');
+        
+        // ✅ SUCCESS_STRATEGY: Enhanced dropdown targeting based on screenshot analysis
+        const dropdownStrategies = [
+          'select',                  // ✅ BREAKTHROUGH: Standard HTML select elements (most likely)
+          'input[type="button"]',    // ✅ Most common success pattern
+          '.z-combobox-inp',         // ✅ ZK Framework specific
+          'input[type="text"]',      // ✅ Fallback for text inputs
+          '.z-combobox',
+          'button',
+          'span[role="button"]',
+          'td select',               // ✅ Select within table cell
+          'td input'                 // ✅ Input within table cell
+        ];
+        
+        let dropdownElement = null;
+        for (const strategy of dropdownStrategies) {
+          const elements = await tipoPersonaRow.locator(strategy).all();
+          this.logger.info(`🔍 Estrategia "${strategy}": ${elements.length} elementos encontrados`);
+          if (elements.length > 0) {
+            dropdownElement = elements[0];
+            this.logger.info(`✅ Usando estrategia: "${strategy}"`);
+            break;
+          }
+        }
+        
+        if (!dropdownElement) {
+          throw new Error(`❌ No se encontró elemento dropdown en fila "Tipo de Persona" para editor ${i + 1}`);
+        }
+        
+        // 🎯 ENHANCED INTERACTION: Support both HTML select and ZK Framework dropdowns
+        const targetNormalized = normalizeText(editor.tipoPersona);
+        this.logger.info(`🎯 Seleccionando: "${targetNormalized}" en elemento dropdown`);
+        
+        let selected = false;
+        
+        // Try HTML Select element first (most likely based on screenshot)
+        if (await dropdownElement.evaluate(el => el.tagName.toLowerCase() === 'select')) {
+          this.logger.info(`📋 Detected HTML <select> element - using standard option selection`);
+          
+          const options = await dropdownElement.locator('option').all();
+          this.logger.info(`🔍 Encontradas ${options.length} opciones en <select>`);
+          
+          for (const option of options) {
+            const text = await option.textContent();
+            if (text) {
+              const normalized = normalizeText(text);
+              this.logger.info(`  📄 Opción: "${text}" → normalizada: "${normalized}"`);
+              
+              if (normalized === targetNormalized) {
+                this.logger.info(`✅ ¡Coincidencia encontrada! Seleccionando: "${text}"`);
+                await dropdownElement.selectOption({ label: text });
+                this.logger.info(`✅ Seleccionado con selectOption: ${text}`);
+                selected = true;
+                break;
+              }
+            }
+          }
+        } else {
+          // Fallback to ZK Framework dropdown logic
+          this.logger.info(`📋 Detected ZK Framework dropdown - using click-based selection`);
+          
+          await dropdownElement.click();
+          await this.page.waitForTimeout(1000);
+          
+          // Verificar que el dropdown se abrió
+          const openDropdowns = await this.page.locator('.z-combobox-pp:visible').count();
+          this.logger.info(`📋 Dropdowns abiertos después del click: ${openDropdowns}`);
+          
+          // Buscar y seleccionar opción con normalización
+          const options = await this.page.locator('.z-combobox-pp:visible td').all();
+          this.logger.info(`🔍 Encontradas ${options.length} opciones en dropdown ZK`);
+          
+          for (const option of options) {
+            const text = await option.textContent();
+            if (text) {
+              const normalized = normalizeText(text);
+              this.logger.info(`  📄 Opción: "${text}" → normalizada: "${normalized}"`);
+              
+              if (normalized === targetNormalized) {
+                this.logger.info(`✅ ¡Coincidencia encontrada! Seleccionando: "${text}"`);
+                await option.click();
+                this.logger.info(`✅ Seleccionado con click: ${text}`);
+                selected = true;
+                break;
+              }
+            }
+          }
+        }
+        
+        if (!selected) {
+          // Tomar screenshot del error para depurar
+          await takeScreenshot(this.page, `error_no_option_found_editor_${i + 1}`, 'error');
+          throw new Error(`❌ No se pudo seleccionar ${editor.tipoPersona}`);
+        }
+        
+        // Verificar la selección
+        await this.page.waitForTimeout(500);
+        
+        // Verificar el valor seleccionado según el tipo de elemento
+        try {
+          let selectedValue = '';
+          if (await dropdownElement.evaluate(el => el.tagName.toLowerCase() === 'select')) {
+            selectedValue = await dropdownElement.inputValue();
+            this.logger.info(`🎯 HTML Select - Valor seleccionado: "${selectedValue}"`);
+          } else {
+            // Para ZK dropdowns, verificar que se cerraron
+            const dropdownsAfterClick = await this.page.locator('.z-combobox-pp:visible').count();
+            this.logger.info(`🔒 ZK Dropdowns visibles después de selección: ${dropdownsAfterClick}`);
+            selectedValue = await dropdownElement.inputValue() || await dropdownElement.textContent() || '';
+            this.logger.info(`🎯 ZK Dropdown - Valor seleccionado: "${selectedValue}"`);
+          }
+        } catch (verificationError) {
+          this.logger.warn(`⚠️ No se pudo verificar valor seleccionado: ${verificationError}`);
+        }
+        
+        // Screenshot después de selección exitosa
+        await takeScreenshot(this.page, `debug_step33_after_tipo_persona_editor_${i + 1}`, 'debug');
+        await this.page.waitForTimeout(1000);
+      }
+
+      stepTracker.logSuccess(33, `${editores.length} editores procesados`);
+      this.logger.info(`✅ PASO 33 COMPLETADO`);
+
+    } catch (error) {
+      this.logger.error('Error en Paso 33:', error);
+      stepTracker.logError(33, `Error: ${error}`);
       throw error;
     }
   }

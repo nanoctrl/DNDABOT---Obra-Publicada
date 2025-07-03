@@ -1,0 +1,73 @@
+{
+  "obra": {
+    "titulo": "Test Editores Mixtos",
+    "tipo": "Música y letra",
+    "album": true,
+    "cantidad_ejemplares": 1000,
+    "genero_musical": "Rock",
+    "esPublicacionWeb": true,
+    "urlPaginaWeb": "https://music.example.com/test-mixtos",
+    "lugar_publicacion": "Ciudad Autónoma de Buenos Aires",
+    "fecha_publicacion": "30-03-2025"
+  },
+  "autores": [
+    {
+      "nombre": { "primerNombre": "Carlos" },
+      "apellido": { "primerApellido": "Mendez" },
+      "fiscalId": { "tipo": "CUIT", "numero": "20-66666666-6" },
+      "nacionalidad": "Argentina",
+      "rol": "Música y Letra"
+    }
+  ],
+  "editores": [
+    {
+      "tipoPersona": "Persona Juridica",
+      "razonSocial": "Mega Editorial S.A.",
+      "cuit": "33-77777777-7",
+      "email": "admin@megaeditorial.com.ar",
+      "telefono": "11 7777 7777",
+      "porcentajeTitularidad": 60,
+      "domicilio": {
+        "calleYNumero": "Av. Corrientes 3000", 
+        "piso": "15", 
+        "departamento": "A", 
+        "cp": "1193",
+        "localidad": "CIUDAD AUTÓNOMA DE BUENOS AIRES", 
+        "provincia": "CIUDAD AUTÓNOMA DE BUENOS AIRES", 
+        "pais": "Argentina"
+      }
+    },
+    {
+      "tipoPersona": "Persona Fisica",
+      "nombre": {
+        "primerNombre": "Roberto",
+        "segundoNombre": "Daniel",
+        "tercerNombre": ""
+      },
+      "apellido": {
+        "primerApellido": "Silva",
+        "segundoApellido": "Morales",
+        "tercerApellido": ""
+      },
+      "cuit": "20-88888888-8",
+      "email": "roberto.silva@hotmail.com",
+      "telefono": "11 8888 8888",
+      "porcentajeTitularidad": 40,
+      "domicilio": {
+        "calleYNumero": "Rivadavia 4000", 
+        "piso": "2", 
+        "departamento": "C", 
+        "cp": "1204",
+        "localidad": "CIUDAD AUTÓNOMA DE BUENOS AIRES", 
+        "provincia": "CIUDAD AUTÓNOMA DE BUENOS AIRES", 
+        "pais": "Argentina"
+      }
+    }
+  ],
+  "gestor": {
+    "cuitCuil": "20352552721",
+    "claveAfip": "Levitateme5023",
+    "representado": "EPSA PUBLISHING S A",
+    "emailNotificaciones": "nmaeso@gmail.com"
+  }
+}

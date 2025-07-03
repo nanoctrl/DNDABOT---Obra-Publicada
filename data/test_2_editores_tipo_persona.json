@@ -1,0 +1,73 @@
+{
+  "obra": {
+    "titulo": "Test Tipo de Persona Editores",
+    "tipo": "Música y letra",
+    "album": false,
+    "cantidad_ejemplares": 1000,
+    "genero_musical": "Electronic",
+    "esPublicacionWeb": true,
+    "urlPaginaWeb": "https://music.example.com/test-tipo-persona",
+    "lugar_publicacion": "Ciudad Autónoma de Buenos Aires",
+    "fecha_publicacion": "01-07-2025"
+  },
+  "autores": [
+    {
+      "nombre": { "primerNombre": "Test" },
+      "apellido": { "primerApellido": "Author" },
+      "fiscalId": { "tipo": "CUIT", "numero": "20-12345678-9" },
+      "nacionalidad": "Argentina",
+      "rol": "Música y Letra"
+    }
+  ],
+  "editores": [
+    {
+      "tipoPersona": "Persona Fisica",
+      "nombre": {
+        "primerNombre": "Patricia",
+        "segundoNombre": "Isabel",
+        "tercerNombre": "Mercedes"
+      },
+      "apellido": {
+        "primerApellido": "Moreno",
+        "segundoApellido": "Jiménez",
+        "tercerApellido": "Navarro"
+      },
+      "cuit": "27-22222222-2",
+      "email": "patricia.moreno@gmail.com",
+      "telefono": "11 2222 2222",
+      "porcentajeTitularidad": 60,
+      "domicilio": {
+        "calleYNumero": "Santa Fe 2800",
+        "piso": "5",
+        "departamento": "B",
+        "cp": "1425",
+        "localidad": "CIUDAD AUTÓNOMA DE BUENOS AIRES",
+        "provincia": "CIUDAD AUTÓNOMA DE BUENOS AIRES",
+        "pais": "Argentina"
+      }
+    },
+    {
+      "tipoPersona": "Persona Juridica",
+      "razonSocial": "Editorial Musical Internacional S.A.",
+      "cuit": "33-11111111-1",
+      "email": "admin@editorialinternacional.com.ar",
+      "telefono": "11 1111 1111",
+      "porcentajeTitularidad": 40,
+      "domicilio": {
+        "calleYNumero": "Av. Corrientes 1500",
+        "piso": "10",
+        "departamento": "A",
+        "cp": "1043",
+        "localidad": "CIUDAD AUTÓNOMA DE BUENOS AIRES",
+        "provincia": "CIUDAD AUTÓNOMA DE BUENOS AIRES",
+        "pais": "Argentina"
+      }
+    }
+  ],
+  "gestor": {
+    "cuitCuil": "20352552721",
+    "claveAfip": "Levitateme5023",
+    "representado": "EPSA PUBLISHING S A",
+    "emailNotificaciones": "nmaeso@gmail.com"
+  }
+}
