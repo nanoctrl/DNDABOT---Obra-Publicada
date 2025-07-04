@@ -14,7 +14,7 @@
     {
       "nombre": { "primerNombre": "Luis" },
       "apellido": { "primerApellido": "Garcia" },
-      "fiscalId": { "tipo": "CUIT", "numero": "20-44444444-4" },
+      "cuit": "20-44444444-4",
       "nacionalidad": "Argentina",
       "rol": "Música y Letra"
     }

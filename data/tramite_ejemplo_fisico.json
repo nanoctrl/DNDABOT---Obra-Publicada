@@ -13,7 +13,7 @@
     {
       "nombre": { "primerNombre": "Ana" },
       "apellido": { "primerApellido": "Rodriguez" },
-      "fiscalId": { "tipo": "CUIT", "numero": "27-22222222-2" },
+      "cuit": "27-22222222-2",
       "nacionalidad": "Argentina",
       "rol": "Música y Letra"
     }

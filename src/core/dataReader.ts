@@ -7,18 +7,35 @@ import { TramiteData, TramiteDataSchema } from '../types/schema';
 
 export async function readInputData(): Promise<TramiteData> {
   try {
-    // Look for JSON files in data directory
-    const dataDir = config.DATA_DIR;
-    const files = await fs.readdir(dataDir);
-    const jsonFiles = files.filter(f => f.endsWith('.json'));
+    let inputFile: string;
     
-    if (jsonFiles.length === 0) {
-      throw new Error('No se encontraron archivos JSON en la carpeta data/');
+    // Check if a specific file was provided as command line argument
+    const args = process.argv.slice(2);
+    const fileArg = args.find(arg => arg.endsWith('.json'));
+    
+    if (fileArg) {
+      // Use the specified file
+      if (path.isAbsolute(fileArg)) {
+        inputFile = fileArg;
+      } else {
+        // If relative path, resolve from data directory
+        inputFile = path.join(config.DATA_DIR, fileArg);
+      }
+      logger.info(`Leyendo archivo especificado: ${inputFile}`);
+    } else {
+      // Look for JSON files in data directory (original behavior)
+      const dataDir = config.DATA_DIR;
+      const files = await fs.readdir(dataDir);
+      const jsonFiles = files.filter(f => f.endsWith('.json'));
+      
+      if (jsonFiles.length === 0) {
+        throw new Error('No se encontraron archivos JSON en la carpeta data/');
+      }
+      
+      // Use the first JSON file found
+      inputFile = path.join(dataDir, jsonFiles[0]);
+      logger.info(`Leyendo archivo de entrada: ${inputFile}`);
     }
-    
-    // Use the first JSON file found
-    const inputFile = path.join(dataDir, jsonFiles[0]);
-    logger.info(`Leyendo archivo de entrada: ${inputFile}`);
     
     // Read and parse JSON
     const content = await fs.readFile(inputFile, 'utf-8');

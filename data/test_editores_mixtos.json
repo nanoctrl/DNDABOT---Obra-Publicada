@@ -14,7 +14,7 @@
     {
       "nombre": { "primerNombre": "Carlos" },
       "apellido": { "primerApellido": "Mendez" },
-      "fiscalId": { "tipo": "CUIT", "numero": "20-66666666-6" },
+      "cuit": "20-66666666-6",
       "nacionalidad": "Argentina",
       "rol": "Música y Letra"
     }

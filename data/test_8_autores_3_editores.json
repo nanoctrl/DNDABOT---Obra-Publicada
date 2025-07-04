@@ -22,7 +22,7 @@
         "segundoApellido": "Martinez",
         "tercerApellido": "González"
       },
-      "fiscalId": { "tipo": "CUIT", "numero": "20-11111111-1" },
+      "cuit": "20-11111111-1",
       "nacionalidad": "Argentina",
       "rol": "Música"
     },
@@ -37,7 +37,7 @@
         "segundoApellido": "López",
         "tercerApellido": "García"
       },
-      "fiscalId": { "tipo": "CUIL", "numero": "27-22222222-2" },
+      "cuit": "27-22222222-2",
       "nacionalidad": "Argentina",
       "rol": "Letra"
     },
@@ -52,7 +52,7 @@
         "segundoApellido": "Johnson",
         "tercerApellido": "Williams"
       },
-      "fiscalId": { "tipo": "Extranjero", "numero": "US-SSN-123456789" },
+      "cuit": "US-SSN-123456789",
       "nacionalidad": "Estados Unidos",
       "rol": "Música"
     },
@@ -67,7 +67,7 @@
         "segundoApellido": "Ruiz",
         "tercerApellido": "Morales"
       },
-      "fiscalId": { "tipo": "CDI", "numero": "23-44444444-4" },
+      "cuit": "23-44444444-4",
       "nacionalidad": "Argentina",
       "rol": "Música y Letra"
     },
@@ -82,7 +82,7 @@
         "segundoApellido": "Martin",
         "tercerApellido": "Bernard"
       },
-      "fiscalId": { "tipo": "Extranjero", "numero": "FR-INSEE-1234567890123" },
+      "cuit": "FR-INSEE-1234567890123",
       "nacionalidad": "Francia",
       "rol": "Letra"
     },
@@ -97,7 +97,7 @@
         "segundoApellido": "Castro",
         "tercerApellido": "Vargas"
       },
-      "fiscalId": { "tipo": "CUIT", "numero": "20-66666666-6" },
+      "cuit": "20-66666666-6",
       "nacionalidad": "Argentina",
       "rol": "Música"
     },
@@ -112,7 +112,7 @@
         "segundoApellido": "Yamamoto",
         "tercerApellido": "Suzuki"
       },
-      "fiscalId": { "tipo": "Extranjero", "numero": "JP-MyNumber-987654321012" },
+      "cuit": "JP-MyNumber-987654321012",
       "nacionalidad": "Japón",
       "rol": "Música y Letra"
     },
@@ -127,7 +127,7 @@
         "segundoApellido": "Silva",
         "tercerApellido": "Torres"
       },
-      "fiscalId": { "tipo": "CUIL", "numero": "27-88888888-8" },
+      "cuit": "27-88888888-8",
       "nacionalidad": "Argentina",
       "rol": "Letra"
     }

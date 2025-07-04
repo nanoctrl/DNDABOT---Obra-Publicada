@@ -288,6 +288,14 @@ export const STEP_DEFINITIONS: StepDefinition[] = [
   },
   {
     number: 34,
+    name: 'insertar_datos_formularios_editores',
+    description: 'Insertar datos específicos en formularios de editores',
+    service: 'tad',
+    required: true,
+    retryable: true
+  },
+  {
+    number: 35,
     name: 'check_process_step',
     description: 'Verificar proceso completado exitosamente',
     service: 'obra',

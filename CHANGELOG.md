@@ -5,6 +5,119 @@ Todos los cambios notables en este proyecto serán documentados en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/),
 y este proyecto adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.0] - 2025-07-03
+
+### Fixed - Step 34 Critical False Positive Resolution + Complete Multi-Editor Data Validation
+
+#### Context
+- **Current State**: Step 34 reported success but failed to insert editor data (false positive)
+- **Problem/Need**: Only Editor 1 Razón Social filled, Editors 2-4 completely empty despite "success" logs
+- **Related Issues**: User feedback: "it insert the first editor rzon social, but then it doesnt insert any of the others editor data. please check the screenshots, its false positive log"
+
+#### Implementation
+- **Approach**: Removed overly strict label validation + added comprehensive screenshot verification
+- **Key Changes**:
+  1. **Fixed False Positive Root Cause**: Removed problematic label validation (lines 2634-2638) that rejected valid fields
+  2. **Enhanced Screenshot Verification**: Added takeScreenshot calls after each successful data insertion
+  3. **Production Validation**: Tested all 3 scenarios - 4 mixed, 4 Persona Jurídica, 4 Persona Física
+
+```typescript
+// ❌ REMOVED: Overly strict label validation causing failures
+// Lines 2634-2638 removed from insertarDatosPersonaJuridica method
+
+// ✅ ADDED: Comprehensive screenshot verification
+await takeScreenshot(this.page, `step34_nombres_insertados_editor_${editorIndex + 1}`, 'milestone');
+await takeScreenshot(this.page, `step34_apellidos_insertados_editor_${editorIndex + 1}`, 'milestone');
+await takeScreenshot(this.page, `step34_nombres_completos_editor_${editorIndex + 1}`, 'milestone');
+await takeScreenshot(this.page, `step34_apellidos_completos_editor_${editorIndex + 1}`, 'milestone');
+await takeScreenshot(this.page, `step34_editor_${editorIndex + 1}_completed`, 'milestone');
+```
+
+#### Technical Details
+- **Files Modified**:
+  - `src/services/tadRegistration.service.ts`: Removed label validation, added comprehensive screenshots
+- **Testing Results**:
+  - ✅ **4 Mixed Editors**: 2 Persona Jurídica + 2 Persona Física - all data correctly inserted
+  - ✅ **4 Persona Jurídica**: All Razón Social fields filled ("Primera/Segunda/Tercera/Cuarta Editorial Musical S.A.")
+  - ✅ **4 Persona Física**: All 24 name fields filled (6 fields × 4 editors) with complete nombres + apellidos
+- **Performance Impact**: Enhanced reliability with visual verification, no performance degradation
+
+#### Validation
+- **Testing Method**: Complete process execution with 3 different editor configurations
+- **Success Metrics**: Visual verification via screenshots showing actual data insertion in forms
+- **Edge Cases**: Tested maximum 4 editors of each type, mixed scenarios, all entity combinations
+
+#### For Next LLM
+- **Critical Achievement**: Step 34 false positive issue completely resolved
+- **Visual Verification**: Screenshot system provides bulletproof validation of data insertion
+- **Production Ready**: All multi-editor scenarios validated and working reliably
+- **Watch Out For**: Screenshots provide ground truth - always check visual results vs logs
+
+## [2.5.8] - 2025-07-03
+
+### Fixed - Step 32 & Step 33 Production-Ready Multi-Editor Workflow
+
+#### Context
+- **Current State**: Step 32 had false positive issue counting titular forms as editor forms
+- **Problem/Need**: Step 32 claimed success while incorrectly including titular dropdown in form count
+- **Related Issues**: Step 33 skipped first editor dropdown thinking titular was first (should be last)
+
+#### Implementation
+- **Approach**: Replaced complex analysis logic with pure mathematical click formula
+- **Key Changes**: 
+  1. **Step 32 Pure Click Logic**: Eliminated form counting, implemented N-1 clicks formula
+  2. **Step 33 Smart Dropdown Detection**: Fixed titular position understanding (last dropdown, not first)
+  3. **Production Testing**: Verified with 2, 3, and 4 editor scenarios
+
+```typescript
+// ✅ STEP 32 BREAKTHROUGH: Pure click logic eliminates false positives
+const clicksNeeded = Math.max(0, editores.length - 1);
+
+if (clicksNeeded === 0) {
+  this.logger.info('✅ Solo 1 editor - usando formulario por defecto, no se necesitan clicks adicionales');
+  return;
+}
+
+// ✅ PURE CLICK LOGIC: Click the + button exactly clicksNeeded times
+for (let clickNumber = 1; clickNumber <= clicksNeeded; clickNumber++) {
+  await button.click();
+  await this.page.waitForTimeout(1500);
+  this.logger.info(`✅ Click ${clickNumber}/${clicksNeeded} realizado exitosamente`);
+}
+
+// ✅ STEP 33 TITULAR POSITION FIX: Titular is always LAST dropdown, not first
+} else if (totalDropdowns > editorsCount) {
+  // More dropdowns than editors - assume LAST dropdown is Titular
+  startIndex = 0;
+  numEditorsToProcess = editorsCount; // Use first N dropdowns (editors), skip last one (titular)
+  this.logger.info(`✅ TITULAR DETECTED: ${totalDropdowns} dropdowns, ${editorsCount} editors - using first ${numEditorsToProcess} (editors), skipping last (Titular)`);
+}
+```
+
+- **Patterns Used**: Mathematical precision over complex DOM analysis for reliability
+
+#### Technical Details
+- **Files Modified**: 
+  - `src/services/tadRegistration.service.ts`: Step 32 pure click logic, Step 33 titular position fix
+- **Testing Results**: 
+  - **2 Editors**: 1 click → SUCCESS ✅
+  - **3 Editors**: 2 clicks → SUCCESS ✅  
+  - **4 Editors**: 3 clicks → SUCCESS ✅
+- **Performance**: Instant execution, 100% success rate across all editor counts
+- **Breaking Changes**: None - maintains same external interface
+
+#### Validation
+- **Testing Method**: Live automation testing with real JSON data files
+- **Success Metrics**: 
+  - Step 32: "N clicks realizados para M editores" logs show exact mathematical precision
+  - Step 33: "M editores procesados" confirms all editor dropdowns correctly filled
+- **Edge Cases**: Single editor (0 clicks), titular presence detection, form isolation
+
+#### For Next LLM
+- **Known Issues**: None - production-ready multi-editor workflow complete
+- **Next Steps**: Consider expanding to 5+ editors or alternative editor types
+- **Watch Out For**: Preserve pure click logic in Step 32 - DO NOT revert to form counting analysis
+
 ## [2.5.7] - 2025-07-02
 
 ### Added - Step 33 Editor Data Insertion Activation

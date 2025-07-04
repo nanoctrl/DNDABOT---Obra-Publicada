@@ -1,0 +1,116 @@
+{
+  "obra": {
+    "titulo": "Test 4 Editores Mixtos Nombres Completos",
+    "tipo": "Música y letra",
+    "album": true,
+    "cantidad_ejemplares": 1500,
+    "genero_musical": "Pop",
+    "esPublicacionWeb": false,
+    "lugar_publicacion": "Ciudad Autónoma de Buenos Aires",
+    "urlPaginaWeb": "https://music.example.com/test-4-editores",
+    "fecha_publicacion": "10-03-2025"
+  },
+  "autores": [
+    {
+      "nombre": { "primerNombre": "Alejandro" },
+      "apellido": { "primerApellido": "Martinez" },
+      "cuit": "20-33333333-3",
+      "nacionalidad": "Argentina",
+      "rol": "Música y Letra"
+    }
+  ],
+  "editores": [
+    {
+      "tipoPersona": "Persona Juridica",
+      "razonSocial": "Primera Editorial Musical S.A.",
+      "cuit": "33-11111111-1",
+      "email": "contacto@primera.com.ar",
+      "telefono": "11 1111 1111",
+      "porcentajeTitularidad": 30,
+      "domicilio": {
+        "calleYNumero": "Av. Corrientes 1000", 
+        "piso": "10", 
+        "departamento": "A", 
+        "cp": "1043",
+        "localidad": "CIUDAD AUTÓNOMA DE BUENOS AIRES", 
+        "provincia": "CIUDAD AUTÓNOMA DE BUENOS AIRES", 
+        "pais": "Argentina"
+      }
+    },
+    {
+      "tipoPersona": "Persona Fisica",
+      "nombre": {
+        "primerNombre": "María",
+        "segundoNombre": "Elena",
+        "tercerNombre": "Isabel"
+      },
+      "apellido": {
+        "primerApellido": "González",
+        "segundoApellido": "Fernández",
+        "tercerApellido": "López"
+      },
+      "cuit": "27-22222222-2",
+      "email": "maria.gonzalez@gmail.com",
+      "telefono": "11 2222 2222",
+      "porcentajeTitularidad": 25,
+      "domicilio": {
+        "calleYNumero": "San Martín 1500",
+        "piso": "4",
+        "departamento": "B", 
+        "cp": "1004",
+        "localidad": "CIUDAD AUTÓNOMA DE BUENOS AIRES",
+        "provincia": "CIUDAD AUTÓNOMA DE BUENOS AIRES",
+        "pais": "Argentina"
+      }
+    },
+    {
+      "tipoPersona": "Persona Juridica",
+      "razonSocial": "Segunda Editorial Musical S.A.",
+      "cuit": "33-33333333-3",
+      "email": "contacto@segunda.com.ar",
+      "telefono": "11 3333 3333",
+      "porcentajeTitularidad": 20,
+      "domicilio": {
+        "calleYNumero": "Av. Santa Fe 2000", 
+        "piso": "5", 
+        "departamento": "C", 
+        "cp": "1123",
+        "localidad": "CIUDAD AUTÓNOMA DE BUENOS AIRES", 
+        "provincia": "CIUDAD AUTÓNOMA DE BUENOS AIRES", 
+        "pais": "Argentina"
+      }
+    },
+    {
+      "tipoPersona": "Persona Fisica",
+      "nombre": {
+        "primerNombre": "Juan",
+        "segundoNombre": "Carlos",
+        "tercerNombre": "Alberto"
+      },
+      "apellido": {
+        "primerApellido": "Rodríguez",
+        "segundoApellido": "Silva",
+        "tercerApellido": "Morales"
+      },
+      "cuit": "20-44444444-4",
+      "email": "juan.rodriguez@gmail.com",
+      "telefono": "11 4444 4444",
+      "porcentajeTitularidad": 25,
+      "domicilio": {
+        "calleYNumero": "Av. Rivadavia 3000",
+        "piso": "8",
+        "departamento": "D", 
+        "cp": "1203",
+        "localidad": "CIUDAD AUTÓNOMA DE BUENOS AIRES",
+        "provincia": "CIUDAD AUTÓNOMA DE BUENOS AIRES",
+        "pais": "Argentina"
+      }
+    }
+  ],
+  "gestor": {
+    "cuitCuil": "20352552721",
+    "claveAfip": "Levitateme5023",
+    "representado": "EPSA PUBLISHING S A",
+    "emailNotificaciones": "nmaeso@gmail.com"
+  }
+}

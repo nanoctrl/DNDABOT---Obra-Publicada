@@ -14,7 +14,7 @@
     {
       "nombre": { "primerNombre": "Pedro" },
       "apellido": { "primerApellido": "Sanchez" },
-      "fiscalId": { "tipo": "CUIT", "numero": "20-11111111-1" },
+      "cuit": "20-11111111-1",
       "nacionalidad": "Argentina",
       "rol": "Música y Letra"
     }

@@ -14,7 +14,7 @@
     {
       "nombre": { "primerNombre": "Test" },
       "apellido": { "primerApellido": "Author" },
-      "fiscalId": { "tipo": "CUIT", "numero": "20-12345678-9" },
+      "cuit": "20-12345678-9",
       "nacionalidad": "Argentina",
       "rol": "Música y Letra"
     }

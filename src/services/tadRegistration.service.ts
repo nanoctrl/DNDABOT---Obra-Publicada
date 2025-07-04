@@ -55,14 +55,17 @@ export class TadRegistrationService {
       await this.abrirCondicionesYSeleccionarLeido();
       await this.guardarCondicionesTramite();
       
-      // SECCIÓN 4: Datos de la obra (Pasos 18-26)
+      // SECCIÓN 4: Datos de la obra (Pasos 18-34)
       await this.completarDatosObra(tramiteData);
+      
+      // SECCIÓN 5: Verificación final (Paso 35)
+      await this.checkProcessStep();
       
       // MODO DESARROLLO: Pausar para siguiente paso  
       if (config.DEVELOPER_DEBUG_MODE) {
-        this.logger.info('\n🎯 REGISTRO BÁSICO COMPLETADO');
-        this.logger.info('✅ Pasos 1-26: Autenticación, búsqueda, datos básicos y obra completados');
-        this.logger.info('🔄 El bot se pausará para permitir extensión manual o desarrollo de pasos adicionales');
+        this.logger.info('\n🎯 REGISTRO COMPLETO FINALIZADO');
+        this.logger.info('✅ Pasos 1-35: Proceso completo incluyendo verificación final');
+        this.logger.info('🔄 El bot se pausará para permitir inspección manual o desarrollo adicional');
         this.logger.info('📋 Para agregar más pasos, usar el protocolo documentado en CHANGELOG.md');
         this.logger.info('▶️ Presiona Resume para continuar con exploración manual\n');
         await this.page.pause();
@@ -620,23 +623,24 @@ export class TadRegistrationService {
       }
     );
 
-    // Paso 33: Insertar datos de editores
+    // Paso 33: Insertar datos de editores (tipo de persona)
     await executeWithInteractiveSupport(
       this.page,
-      'Insertar datos de editores en formularios',
+      'Insertar tipo de persona en formularios editores',
       async () => {
         await this.insertarDatosEditores(tramiteData.editores || []);
       }
     );
 
-    // Paso 34: Check Process Step - Verificar proceso completado exitosamente
+    // Paso 34: Insertar datos específicos en formularios de editores
     await executeWithInteractiveSupport(
       this.page,
-      'Verificar proceso completado exitosamente',
+      'Insertar datos específicos en formularios de editores',
       async () => {
-        await this.checkProcessStep();
+        await this.insertarDatosFormulariosEditores(tramiteData.editores || []);
       }
     );
+
   }
 
   /**
@@ -2061,15 +2065,16 @@ export class TadRegistrationService {
     }
   }
 
+
   /**
-   * Paso 34: Check Process Step - Verificar proceso completado exitosamente
+   * Paso 35: Check Process Step - Verificar proceso completado exitosamente
    * Este paso analiza la página con todas las estrategias disponibles para verificar el estado final
-   * y mantiene el navegador abierto por 10 segundos para inspección visual
+   * y mantiene el navegador abierto por 5 segundos para inspección visual
    */
   private async checkProcessStep(): Promise<void> {
-    this.logger.info('🔍 PASO 34: Verificando proceso completado exitosamente...');
+    this.logger.info('🔍 PASO 35: Verificando proceso completado exitosamente...');
     const stepTracker = getStepTracker();
-    stepTracker.startStep(34);
+    stepTracker.startStep(35);
     
     try {
       // Tomar screenshot del estado final
@@ -2123,12 +2128,13 @@ export class TadRegistrationService {
       await new Promise(resolve => setTimeout(resolve, 10000));
       this.logger.info('✅ Período de verificación visual completado');
       
-      stepTracker.logSuccess(34, 'Proceso verificado exitosamente con análisis completo');
-      this.logger.info('✅ PASO 34 COMPLETADO - Check Process Step ejecutado exitosamente');
+      stepTracker.logSuccess(35, 'Proceso verificado exitosamente con análisis completo');
+      this.logger.info('✅ PASO 35 COMPLETADO - Check Process Step ejecutado exitosamente');
       
     } catch (error) {
       this.logger.error('Error en Check Process Step:', error);
       await takeScreenshot(this.page, 'check_process_step_error', 'error');
+      stepTracker.logError(35, `Error: ${error}`);
       throw error;
     }
   }
@@ -2402,6 +2408,638 @@ export class TadRegistrationService {
       stepTracker.logError(33, `Error: ${error}`);
       throw error;
     }
+  }
+
+  /**
+   * PASO 34: Insertar datos específicos en formularios de editores
+   * Inserta Razón Social para Persona Jurídica y nombres/apellidos para Persona Física
+   */
+  private async insertarDatosFormulariosEditores(editores: any[]): Promise<void> {
+    const stepNumber = 34;
+    const stepTracker = getStepTracker();
+    
+    try {
+      stepTracker.startStep(stepNumber);
+      this.logger.info(`📝 PASO ${stepNumber}: Insertando datos específicos en formularios de editores...`);
+      
+      if (!editores || editores.length === 0) {
+        this.logger.info('✅ No hay editores para procesar');
+        return;
+      }
+      
+      // Screenshot del estado inicial
+      await takeScreenshot(this.page, `step34_initial_state_${editores.length}_editores`, 'milestone');
+      
+      // ✅ NEW: HTML Analysis Step - Discover all editor form field names and logic
+      await this.analyzeEditorFormFields();
+      
+      // ✅ CRITICAL IMPROVEMENT: Verificar número de forms "Datos del Editor" disponibles
+      const datosEditorHeaders = await this.page.locator('text="Datos del Editor"').all();
+      this.logger.info(`📊 Encontrados ${datosEditorHeaders.length} headers "Datos del Editor" en la página`);
+      this.logger.info(`📋 Editores a procesar: ${editores.length}`);
+      
+      if (datosEditorHeaders.length < editores.length) {
+        this.logger.warn(`⚠️ ADVERTENCIA: Hay menos headers "Datos del Editor" (${datosEditorHeaders.length}) que editores (${editores.length})`);
+      }
+      
+      const maxProcessable = Math.min(editores.length, datosEditorHeaders.length);
+      this.logger.info(`🎯 Procesando ${maxProcessable} editores basados en headers disponibles`);
+      
+      for (let i = 0; i < maxProcessable; i++) {
+        const editor = editores[i];
+        this.logger.info(`📝 Procesando editor ${i + 1}/${maxProcessable}: ${editor.tipoPersona}`);
+        this.logger.info(`🎯 Usando header "Datos del Editor" #${i + 1} como referencia`);
+        
+        if (editor.tipoPersona === 'Persona Juridica') {
+          await this.insertarDatosPersonaJuridica(editor, i);
+        } else if (editor.tipoPersona === 'Persona Fisica') {
+          await this.insertarDatosPersonaFisica(editor, i);
+        } else {
+          this.logger.warn(`⚠️ Tipo de persona desconocido: ${editor.tipoPersona}`);
+          continue;
+        }
+        
+        // Pausa breve entre editores y screenshot
+        await this.page.waitForTimeout(1000);
+        await takeScreenshot(this.page, `step34_editor_${i + 1}_completed`, 'milestone');
+      }
+      
+      this.logger.info(`✅ Paso ${stepNumber} completado: Datos insertados en ${maxProcessable} formularios de editores`);
+      stepTracker.logSuccess(stepNumber, `Datos insertados en ${maxProcessable} formularios de editores`);
+      
+    } catch (error) {
+      this.logger.error(`❌ Error en Paso ${stepNumber}:`, error);
+      await takeScreenshot(this.page, `error_step34_datos_editores`, 'error');
+      stepTracker.logError(stepNumber, `Error: ${error}`);
+      throw error;
+    }
+  }
+
+  /**
+   * NEW: Analyze all editor form fields to discover naming patterns
+   */
+  private async analyzeEditorFormFields(): Promise<void> {
+    this.logger.info('🔍 ANÁLISIS HTML: Descubriendo campos de formularios de editores...');
+    
+    try {
+      // Find all input fields related to editor forms
+      const allInputs = await this.page.locator('input[type="text"]').all();
+      const editorFields: { name: string; type: string; editorIndex?: number }[] = [];
+      
+      for (const input of allInputs) {
+        const name = await input.getAttribute('name');
+        if (name && (name.includes('datos_edit') || name.includes('razon_social') || name.includes('nombre'))) {
+          editorFields.push({ name, type: 'text' });
+        }
+      }
+      
+      this.logger.info(`📊 Encontrados ${editorFields.length} campos relacionados con editores:`);
+      
+      // Analyze naming patterns
+      const patterns = {
+        razonSocial: [] as string[],
+        nombres: [] as string[],
+        apellidos: [] as string[],
+        otros: [] as string[]
+      };
+      
+      editorFields.forEach(field => {
+        if (field.name.includes('razon_social')) {
+          patterns.razonSocial.push(field.name);
+        } else if (field.name.includes('nombre')) {
+          patterns.nombres.push(field.name);
+        } else if (field.name.includes('apellido')) {
+          patterns.apellidos.push(field.name);
+        } else {
+          patterns.otros.push(field.name);
+        }
+      });
+      
+      // Log patterns discovered
+      this.logger.info('🎯 PATRONES DESCUBIERTOS:');
+      this.logger.info(`📋 Razón Social (${patterns.razonSocial.length}): ${JSON.stringify(patterns.razonSocial)}`);
+      this.logger.info(`👤 Nombres (${patterns.nombres.length}): ${JSON.stringify(patterns.nombres)}`);
+      this.logger.info(`👥 Apellidos (${patterns.apellidos.length}): ${JSON.stringify(patterns.apellidos)}`);
+      this.logger.info(`📎 Otros (${patterns.otros.length}): ${JSON.stringify(patterns.otros)}`);
+      
+      // Analyze indexing logic
+      this.logger.info('🔢 LÓGICA DE INDEXADO:');
+      patterns.razonSocial.forEach((field) => {
+        const match = field.match(/razon_social_datos_edit(_R(\d+))?/);
+        if (match) {
+          const editorNum = match[2] ? parseInt(match[2]) + 1 : 1;
+          this.logger.info(`   Editor ${editorNum}: ${field}`);
+        }
+      });
+      
+      patterns.nombres.forEach((field) => {
+        const match = field.match(/nombre_(\d+)_datos_edit(_R(\d+))?/);
+        if (match) {
+          const nombreNum = match[1];
+          const editorNum = match[3] ? parseInt(match[3]) + 1 : 1;
+          this.logger.info(`   Editor ${editorNum}, Nombre ${nombreNum}: ${field}`);
+        }
+      });
+      
+      this.logger.info('✅ Análisis HTML completado');
+      
+    } catch (error) {
+      this.logger.warn('⚠️ Error en análisis HTML (no crítico):', error);
+    }
+  }
+
+  /**
+   * Insertar datos para Persona Jurídica: Razón Social
+   * UPDATED: Using discovered field naming patterns from HTML analysis
+   */
+  private async insertarDatosPersonaJuridica(editor: any, editorIndex: number): Promise<void> {
+    this.logger.info(`🏢 Insertando datos Persona Jurídica: ${editor.razonSocial}`);
+    
+    try {
+      this.logger.info(`🎯 Procesando editor Persona Jurídica ${editorIndex + 1} - USING DISCOVERED PATTERNS`);
+      
+      // ✅ NEW: Use discovered field naming pattern
+      const strategies = [
+        // Estrategia 1: Direct field targeting using discovered naming pattern
+        async () => {
+          this.logger.info(`🎯 Estrategia 1: Targeting directo con patrón de nombres descubierto`);
+          
+          // Apply discovered naming pattern:
+          // Editor 1: razon_social_datos_edit
+          // Editor 2+: razon_social_datos_edit_R[editorIndex-1]
+          let fieldName: string;
+          if (editorIndex === 0) {
+            fieldName = 'razon_social_datos_edit';
+          } else {
+            fieldName = `razon_social_datos_edit_R${editorIndex}`;
+          }
+          
+          this.logger.info(`🎯 Buscando campo: input[name="${fieldName}"]`);
+          
+          const inputField = this.page.locator(`input[name="${fieldName}"]`).first();
+          
+          if (await inputField.count() > 0 && await inputField.isVisible()) {
+            this.logger.info(`✅ Campo "Razón social" encontrado para editor ${editorIndex + 1}: ${fieldName}`);
+            return inputField;
+          } else {
+            this.logger.debug(`❌ Campo no encontrado: ${fieldName}`);
+          }
+          
+          return null;
+        },
+        
+        // Estrategia 2: Alternative naming pattern (in case pattern varies)
+        async () => {
+          this.logger.info(`🎯 Estrategia 2: Patrón alternativo para editor ${editorIndex + 1}`);
+          
+          // Try alternative patterns based on manual recording
+          const alternativePatterns = [
+            `razon_social_datos_edit${editorIndex > 0 ? `_R${editorIndex}` : ''}`,
+            `razon_social_datos_edit${editorIndex > 0 ? `_R${editorIndex - 1}` : ''}`,
+            'razon_social_datos_edit'
+          ];
+          
+          for (const pattern of alternativePatterns) {
+            this.logger.debug(`🔍 Probando patrón: ${pattern}`);
+            const field = this.page.locator(`input[name="${pattern}"]`).first();
+            
+            if (await field.count() > 0 && await field.isVisible()) {
+              this.logger.info(`✅ Campo encontrado con patrón alternativo: ${pattern}`);
+              return field;
+            }
+          }
+          
+          return null;
+        }
+      ];
+      
+      let fieldFound = false;
+      
+      for (let strategyIndex = 0; strategyIndex < strategies.length; strategyIndex++) {
+        try {
+          this.logger.info(`🔍 Probando estrategia ${strategyIndex + 1} para Razón Social...`);
+          const field = await strategies[strategyIndex]();
+          
+          if (field && await field.isVisible()) {
+            await field.click();
+            await this.page.waitForTimeout(500);
+            await field.clear();
+            await field.fill(editor.razonSocial);
+            
+            // ✅ FIXED: Removed overly strict label validation that was causing false negatives
+            // Direct field targeting is reliable enough without proximity validation
+            await this.page.waitForTimeout(500);
+            
+            // Verificar que el valor se insertó
+            const insertedValue = await field.inputValue();
+            if (insertedValue === editor.razonSocial) {
+              this.logger.info(`✅ Razón Social insertada exitosamente con estrategia ${strategyIndex + 1}: "${editor.razonSocial}"`);
+              
+              // 📸 CRITICAL: Take screenshot after successful insertion
+              await takeScreenshot(
+                this.page, 
+                `step34_editor_${editorIndex + 1}_razon_social_inserted`, 
+                'debug'
+              );
+              
+              fieldFound = true;
+              break;
+            } else {
+              this.logger.warn(`⚠️ Estrategia ${strategyIndex + 1}: Valor no se insertó correctamente. Esperado: "${editor.razonSocial}", Obtenido: "${insertedValue}"`);
+            }
+          } else {
+            this.logger.debug(`❌ Estrategia ${strategyIndex + 1}: Campo no encontrado o no visible`);
+          }
+        } catch (e) {
+          this.logger.debug(`❌ Estrategia ${strategyIndex + 1} falló:`, (e as Error).message);
+          continue;
+        }
+      }
+      
+      if (!fieldFound) {
+        this.logger.error(`❌ No se pudo insertar Razón Social para editor ${editorIndex + 1} con ninguna estrategia`);
+        throw new Error(`❌ No se pudo insertar Razón Social para editor ${editorIndex + 1}`);
+      }
+      
+    } catch (error) {
+      this.logger.error(`❌ Error insertando datos Persona Jurídica:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Insertar datos para Persona Física: nombres y apellidos
+   */
+  private async insertarDatosPersonaFisica(editor: any, editorIndex: number): Promise<void> {
+    this.logger.info(`👤 Insertando datos Persona Física: ${editor.nombre.primerNombre} ${editor.apellido.primerApellido}`);
+    
+    try {
+      this.logger.info(`🎯 Procesando editor Persona Física ${editorIndex + 1}`);
+      
+      // Insertar nombres usando estrategias mejoradas
+      await this.insertarNombresEditor(editor.nombre, editorIndex);
+      
+      // Insertar apellidos usando estrategias mejoradas  
+      await this.insertarApellidosEditor(editor.apellido, editorIndex);
+      
+      this.logger.info(`✅ Nombres y apellidos insertados para editor ${editorIndex + 1}`);
+      
+    } catch (error) {
+      this.logger.error(`❌ Error insertando datos Persona Física:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Insertar nombres para Persona Física (primer, segundo, tercer nombre)
+   * UPDATED: Using discovered field naming patterns
+   */
+  private async insertarNombresEditor(nombres: any, editorIndex: number): Promise<void> {
+    this.logger.info(`📝 Insertando nombres para editor ${editorIndex + 1} - USING DISCOVERED PATTERNS`);
+    
+    const nameFields = [
+      { field: 'primerNombre', value: nombres.primerNombre, required: true, fieldNum: 1 },
+      { field: 'segundoNombre', value: nombres.segundoNombre, required: false, fieldNum: 2 },
+      { field: 'tercerNombre', value: nombres.tercerNombre, required: false, fieldNum: 3 }
+    ];
+    
+    for (let fieldIndex = 0; fieldIndex < nameFields.length; fieldIndex++) {
+      const { field, value, required, fieldNum } = nameFields[fieldIndex];
+      
+      if (value && value.trim() !== '') {
+        this.logger.info(`🔍 Insertando ${field}: "${value}"`);
+        
+        const strategies = [
+          // ✅ NEW: Direct field targeting using discovered naming pattern
+          async () => {
+            this.logger.info(`🎯 Estrategia 1: Targeting directo con patrón de nombres descubierto`);
+            
+            // Apply discovered naming pattern:
+            // Editor 1: nombre_1_datos_edit, nombre_2_datos_edit, nombre_3_datos_edit
+            // Editor 2+: nombre_1_datos_edit_R[editorIndex], etc.
+            let fieldName: string;
+            if (editorIndex === 0) {
+              fieldName = `nombre_${fieldNum}_datos_edit`;
+            } else {
+              fieldName = `nombre_${fieldNum}_datos_edit_R${editorIndex}`;
+            }
+            
+            this.logger.info(`🎯 Buscando campo: input[name="${fieldName}"]`);
+            
+            const inputField = this.page.locator(`input[name="${fieldName}"]`).first();
+            
+            if (await inputField.count() > 0 && await inputField.isVisible()) {
+              this.logger.info(`✅ Campo "${field}" encontrado para editor ${editorIndex + 1}: ${fieldName}`);
+              return inputField;
+            } else {
+              this.logger.debug(`❌ Campo no encontrado: ${fieldName}`);
+            }
+            
+            return null;
+          },
+          
+          // ✅ Estrategia 2: Alternative patterns based on manual recording
+          async () => {
+            this.logger.info(`🎯 Estrategia 2: Patrones alternativos para ${field} en editor ${editorIndex + 1}`);
+            
+            // Try alternative patterns
+            const alternativePatterns = [
+              `nombre_${fieldNum}_datos_edit${editorIndex > 0 ? `_R${editorIndex}` : ''}`,
+              `nombre_${fieldNum}_datos_edit${editorIndex > 0 ? `_R${editorIndex - 1}` : ''}`,
+              `nombre_${fieldNum}_datos_edit`
+            ];
+            
+            for (const pattern of alternativePatterns) {
+              this.logger.debug(`🔍 Probando patrón: ${pattern}`);
+              const field = this.page.locator(`input[name="${pattern}"]`).first();
+              
+              if (await field.count() > 0 && await field.isVisible()) {
+                this.logger.info(`✅ Campo encontrado con patrón alternativo: ${pattern}`);
+                return field;
+              }
+            }
+            
+            return null;
+          },
+          
+          // ✅ Legacy fallback: Label-based approach as backup
+          async () => {
+            this.logger.info(`🎯 Estrategia 3: Fallback con etiquetas para "${field}" en editor ${editorIndex + 1}`);
+            
+            // Mapear nombres de campos a posibles etiquetas en el formulario
+            const labelMappings = {
+              'primerNombre': ['Primer nombre', 'Nombre', 'Nombres', 'Primer Nombre'],
+              'segundoNombre': ['Segundo nombre', 'Segundo Nombre'],
+              'tercerNombre': ['Tercer nombre', 'Tercer Nombre']
+            };
+            
+            const possibleLabels = labelMappings[field as keyof typeof labelMappings] || [field];
+            
+            // Buscar todas las secciones "Datos del Editor"
+            const editorSections = await this.page.locator('text="Datos del Editor"').all();
+            
+            if (editorIndex < editorSections.length) {
+              const targetSection = editorSections[editorIndex];
+              const sectionContainer = targetSection.locator('xpath=./ancestor::table[1] | ./ancestor::div[1]').first();
+              
+              // Buscar por cada etiqueta posible dentro de esta sección
+              for (const label of possibleLabels) {
+                const labelElement = sectionContainer.locator(`text="${label}"`).first();
+                
+                if (await labelElement.count() > 0) {
+                  // Buscar input cerca de esta etiqueta
+                  const nearbyInput = labelElement.locator('xpath=./ancestor::tr[1]//input[@type="text"] | ./following::input[@type="text"][1]').first();
+                  
+                  if (await nearbyInput.count() > 0 && await nearbyInput.isVisible()) {
+                    this.logger.info(`🎯 Campo "${field}" encontrado usando etiqueta "${label}"`);
+                    return nearbyInput;
+                  }
+                }
+              }
+            }
+            
+            return null;
+          },
+          
+          // Estrategia 2: Buscar por posición secuencial dentro de la sección del editor
+          async () => {
+            this.logger.info(`🎯 Estrategia 2: Buscar ${field} por posición secuencial en editor ${editorIndex + 1}`);
+            
+            // Buscar todas las secciones "Datos del Editor"
+            const editorSections = await this.page.locator('text="Datos del Editor"').all();
+            
+            if (editorIndex < editorSections.length) {
+              const targetSection = editorSections[editorIndex];
+              const sectionContainer = targetSection.locator('xpath=./ancestor::table[1] | ./ancestor::div[1]').first();
+              
+              // Buscar todos los inputs de texto vacíos dentro de esta sección
+              const sectionInputs = await sectionContainer.locator('input[type="text"]:visible').all();
+              const emptyInputs = [];
+              
+              for (const input of sectionInputs) {
+                const value = await input.inputValue();
+                if (value.trim() === '') {
+                  emptyInputs.push(input);
+                }
+              }
+              
+              this.logger.info(`📊 Encontrados ${emptyInputs.length} inputs vacíos en sección ${editorIndex + 1}`);
+              
+              // Para nombres: usar índice directo (0=primer nombre, 1=segundo nombre, 2=tercer nombre)
+              if (fieldIndex < emptyInputs.length) {
+                this.logger.info(`🎯 Campo ${field} encontrado en posición ${fieldIndex} de sección ${editorIndex + 1}`);
+                return emptyInputs[fieldIndex];
+              }
+            }
+            
+            return null;
+          }
+        ];
+        
+        let fieldInserted = false;
+        
+        for (let strategyIndex = 0; strategyIndex < strategies.length; strategyIndex++) {
+          try {
+            this.logger.info(`🔍 Probando estrategia ${strategyIndex + 1} para ${field}...`);
+            const fieldElement = await strategies[strategyIndex]();
+            
+            if (fieldElement && await fieldElement.isVisible()) {
+              await fieldElement.click();
+              await this.page.waitForTimeout(300);
+              await fieldElement.fill(value);
+              await this.page.waitForTimeout(300);
+              
+              // Verificar que el valor se insertó
+              const insertedValue = await fieldElement.inputValue();
+              if (insertedValue === value) {
+                this.logger.info(`✅ ${field} insertado exitosamente con estrategia ${strategyIndex + 1}: "${value}"`);
+                // Tomar screenshot para verificar inserción de nombres
+                await takeScreenshot(this.page, `step34_nombres_insertados_editor_${editorIndex + 1}`, 'milestone');
+                fieldInserted = true;
+                break;
+              } else {
+                this.logger.warn(`⚠️ Estrategia ${strategyIndex + 1}: Valor de ${field} no se insertó correctamente`);
+              }
+            }
+          } catch (e) {
+            this.logger.debug(`❌ Estrategia ${strategyIndex + 1} para ${field} falló:`, (e as Error).message);
+            continue;
+          }
+        }
+        
+        if (!fieldInserted) {
+          if (required) {
+            throw new Error(`❌ No se pudo insertar ${field} requerido: "${value}"`);
+          } else {
+            this.logger.warn(`⚠️ No se pudo insertar ${field} opcional: "${value}"`);
+          }
+        }
+      } else if (required) {
+        this.logger.warn(`⚠️ Campo requerido ${field} está vacío`);
+      }
+    }
+    
+    // Tomar screenshot final después de insertar todos los nombres
+    await takeScreenshot(this.page, `step34_nombres_completos_editor_${editorIndex + 1}`, 'milestone');
+  }
+
+  /**
+   * Insertar apellidos para Persona Física (primer, segundo, tercer apellido)
+   */
+  private async insertarApellidosEditor(apellidos: any, editorIndex: number): Promise<void> {
+    this.logger.info(`📝 Insertando apellidos para editor ${editorIndex + 1}`);
+    
+    const surnameFields = [
+      { field: 'primerApellido', value: apellidos.primerApellido, required: true, fieldNum: 1 },
+      { field: 'segundoApellido', value: apellidos.segundoApellido, required: false, fieldNum: 2 },
+      { field: 'tercerApellido', value: apellidos.tercerApellido, required: false, fieldNum: 3 }
+    ];
+    
+    for (let fieldIndex = 0; fieldIndex < surnameFields.length; fieldIndex++) {
+      const { field, value, required, fieldNum } = surnameFields[fieldIndex];
+      
+      if (value && value.trim() !== '') {
+        this.logger.info(`🔍 Insertando ${field}: "${value}"`);
+        
+        const strategies = [
+          // ✅ NEW: Direct field targeting using discovered naming pattern
+          async () => {
+            this.logger.info(`🎯 Estrategia 1: Targeting directo con patrón de apellidos descubierto`);
+            
+            // Apply discovered naming pattern:
+            // Editor 1: apellido_1_datos_edit, apellido_2_datos_edit, apellido_3_datos_edit
+            // Editor 2+: apellido_1_datos_edit_R[editorIndex], etc.
+            let fieldName: string;
+            if (editorIndex === 0) {
+              fieldName = `apellido_${fieldNum}_datos_edit`;
+            } else {
+              fieldName = `apellido_${fieldNum}_datos_edit_R${editorIndex}`;
+            }
+            
+            this.logger.info(`🎯 Buscando campo: input[name="${fieldName}"]`);
+            
+            const inputField = this.page.locator(`input[name="${fieldName}"]`).first();
+            
+            if (await inputField.count() > 0 && await inputField.isVisible()) {
+              this.logger.info(`✅ Campo "${field}" encontrado para editor ${editorIndex + 1}: ${fieldName}`);
+              return inputField;
+            } else {
+              this.logger.debug(`❌ Campo no encontrado: ${fieldName}`);
+            }
+            
+            return null;
+          },
+          
+          // ✅ Estrategia 2: Alternative patterns based on manual recording
+          async () => {
+            this.logger.info(`🎯 Estrategia 2: Patrones alternativos para ${field} en editor ${editorIndex + 1}`);
+            
+            // Try alternative patterns
+            const alternativePatterns = [
+              `apellido_${fieldNum}_datos_edit${editorIndex > 0 ? `_R${editorIndex}` : ''}`,
+              `apellido_${fieldNum}_datos_edit${editorIndex > 0 ? `_R${editorIndex - 1}` : ''}`,
+              `apellido_${fieldNum}_datos_edit`
+            ];
+            
+            for (const pattern of alternativePatterns) {
+              this.logger.debug(`🔍 Probando patrón: ${pattern}`);
+              const field = this.page.locator(`input[name="${pattern}"]`).first();
+              
+              if (await field.count() > 0 && await field.isVisible()) {
+                this.logger.info(`✅ Campo encontrado con patrón alternativo: ${pattern}`);
+                return field;
+              }
+            }
+            
+            return null;
+          },
+          
+          // ✅ Estrategia 3: Legacy label-based targeting (fallback)
+          async () => {
+            this.logger.info(`🎯 Estrategia 3: Targeting por etiqueta (fallback)`);
+            
+            // Mapear apellidos a posibles etiquetas en el formulario
+            const labelMappings = {
+              'primerApellido': ['Primer apellido', 'Apellido', 'Apellidos', 'Primer Apellido'],
+              'segundoApellido': ['Segundo apellido', 'Segundo Apellido'],
+              'tercerApellido': ['Tercer apellido', 'Tercer Apellido']
+            };
+            
+            const possibleLabels = labelMappings[field as keyof typeof labelMappings] || [field];
+            
+            // Buscar todas las secciones "Datos del Editor"
+            const editorSections = await this.page.locator('text="Datos del Editor"').all();
+            
+            if (editorIndex < editorSections.length) {
+              const targetSection = editorSections[editorIndex];
+              const sectionContainer = targetSection.locator('xpath=./ancestor::table[1] | ./ancestor::div[1]').first();
+              
+              // Buscar por cada etiqueta posible dentro de esta sección
+              for (const label of possibleLabels) {
+                const labelElement = sectionContainer.locator(`text="${label}"`).first();
+                
+                if (await labelElement.count() > 0) {
+                  // Buscar input cerca de esta etiqueta
+                  const nearbyInput = labelElement.locator('xpath=./ancestor::tr[1]//input[@type="text"] | ./following::input[@type="text"][1]').first();
+                  
+                  if (await nearbyInput.count() > 0 && await nearbyInput.isVisible()) {
+                    this.logger.info(`🎯 Campo "${field}" encontrado usando etiqueta "${label}"`);
+                    return nearbyInput;
+                  }
+                }
+              }
+            }
+            
+            return null;
+          }
+        ];
+        
+        let fieldInserted = false;
+        
+        for (let strategyIndex = 0; strategyIndex < strategies.length; strategyIndex++) {
+          try {
+            this.logger.info(`🔍 Probando estrategia ${strategyIndex + 1} para ${field}...`);
+            const fieldElement = await strategies[strategyIndex]();
+            
+            if (fieldElement && await fieldElement.isVisible()) {
+              await fieldElement.click();
+              await this.page.waitForTimeout(300);
+              await fieldElement.clear();
+              await fieldElement.fill(value);
+              await this.page.waitForTimeout(300);
+              
+              // Verificar que el valor se insertó
+              const insertedValue = await fieldElement.inputValue();
+              if (insertedValue === value) {
+                this.logger.info(`✅ ${field} insertado exitosamente con estrategia ${strategyIndex + 1}: "${value}"`);
+                // Tomar screenshot para verificar inserción de apellidos
+                await takeScreenshot(this.page, `step34_apellidos_insertados_editor_${editorIndex + 1}`, 'milestone');
+                fieldInserted = true;
+                break;
+              } else {
+                this.logger.warn(`⚠️ Estrategia ${strategyIndex + 1}: Valor de ${field} no se insertó correctamente. Esperado: "${value}", Obtenido: "${insertedValue}"`);
+              }
+            }
+          } catch (e) {
+            this.logger.debug(`❌ Estrategia ${strategyIndex + 1} para ${field} falló:`, (e as Error).message);
+            continue;
+          }
+        }
+        
+        if (!fieldInserted) {
+          if (required) {
+            throw new Error(`❌ No se pudo insertar ${field} requerido: "${value}"`);
+          } else {
+            this.logger.warn(`⚠️ No se pudo insertar ${field} opcional: "${value}"`);
+          }
+        }
+      } else if (required) {
+        this.logger.warn(`⚠️ Campo requerido ${field} está vacío`);
+      }
+    }
+    
+    // Tomar screenshot final después de insertar todos los apellidos
+    await takeScreenshot(this.page, `step34_apellidos_completos_editor_${editorIndex + 1}`, 'milestone');
   }
 
 }

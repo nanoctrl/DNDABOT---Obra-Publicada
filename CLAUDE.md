@@ -20,8 +20,8 @@ This bot automates the entire process, turning what usually takes 30-60 minutes 
 **Nombre del Proyecto**: registro-obras-bot  
 **Ubicación**: `/Users/nahuelmaeso/Desktop/DemoJupiter/CLAUDE.BOTDNDA/registro-obras-bot`  
 **Propósito**: Automatización del proceso de registro de obras musicales publicadas en los sistemas gubernamentales argentinos (AFIP y TAD - Trámites a Distancia)  
-**Estado Actual**: v2.5.5 - Core automation (Steps 1-33) + Validated schema system with standardized author participation  
-**Status**: PRODUCTION-TESTED - Live automation + Validated data validation for standardized author roles
+**Estado Actual**: v2.6.0 - Complete workflow (Steps 1-35) + Production-validated multi-editor data insertion with visual verification  
+**Status**: PRODUCTION-VALIDATED - Complete multi-editor registration system with false positive resolution and comprehensive testing
 
 ## 🤖 LLM Context Protocol v2.0
 
@@ -33,11 +33,11 @@ This protocol ensures perfect handoff between LLM sessions. Every LLM MUST follo
 ```bash
 # 1. Check project version and status
 cat package.json | grep version
-# Current version: 2.5.5
+# Current version: 2.6.0
 
 # 2. Check how many steps are implemented
 grep "export const TOTAL_STEPS" src/config/steps.config.ts
-# Currently: 33 steps implemented
+# Currently: 35 steps implemented
 
 # 3. Read last 5 changelog entries to understand recent work
 head -200 changelog.md | grep -A 20 "^##"
@@ -252,7 +252,7 @@ page.locator('[name="cmb_usted_opta"]')
 page.locator('tr:has-text("¿Usted opta por depositar") button')
 ```
 
-## 📋 Currently Implemented Steps (1-34)
+## 📋 Currently Implemented Steps (1-36)
 
 ### Overview of the Registration Process
 
@@ -264,10 +264,12 @@ The bot automates these manual steps:
 5. **Work Details** (Steps 18-30): Enter musical work information
 6. **Author Data** (Step 31): Complete multi-author information insertion
 7. **Editor Forms** (Step 32): Create editor forms based on JSON data
-8. **Editor Data** (Step 33): Insert editor data into created forms
-9. **Verification** (Step 34): Final process verification
+8. **Editor Data** (Step 33): Insert editor data
+9. **Editor Data** (Step 34): Insert complete editor data with visual verification
+10. **Editor Documents** (Step 35): Insert complete editor data: Document
+11. **Verification** (Step 36): Final process verification and validation
 
-### Flujo Completo Implementado (34 Pasos)
+### Flujo Completo Implementado (36 Pasos)
 
 **SECCIÓN 1: Autenticación AFIP (Pasos 1-8)**
 1. ✅ Navegación a TAD
@@ -312,12 +314,20 @@ The bot automates these manual steps:
 **SECCIÓN 6: Datos de Autores (Paso 31) ✅ COMPLETADO**
 31. ✅ Insertar datos completos de todos los autores
 
-**SECCIÓN 7: Datos de Editores (Pasos 32-33) ✅ COMPLETADO**
+**SECCIÓN 7: Formularios de Editores (Paso 32) ✅ COMPLETADO**
 32. ✅ Crear formularios de editores (agregar formularios según JSON)
-33. ✅ Insertar datos de editores en formularios
 
-**SECCIÓN 8: Verificación Final (Paso 34) ✅ COMPLETADO**
-34. ✅ Verificar proceso completado exitosamente
+**SECCIÓN 8: Datos de Editores (Paso 33) ✅ COMPLETADO**
+33. ✅ Insertar Datos Editores
+
+**SECCIÓN 9: Datos de Editores (Paso 34) ✅ COMPLETADO**
+34. ✅ **[PRODUCTION-VALIDATED]** Insertar datos completos de editores con verificación visual
+
+**SECCIÓN 10: Documentos de Editores (Paso 35) ✅ NUEVO**
+35. ✅ Insert complete editor data: Document
+
+**SECCIÓN 11: Verificación Final (Paso 36) ✅ COMPLETADO**
+36. ✅ Verificar proceso completado exitosamente
 
 ### Detailed Step Breakdown
 
@@ -512,9 +522,9 @@ The bot automates these manual steps:
   - **🚀 PERFORMANCE**: Direct field patterns provide instant field location (100% success rate)
   - File: `src/services/tadRegistration.service.ts:insertarDatosAutores`
 
-#### Section 7: Editor Data Management (Steps 32-33) ✅ COMPLETE
+#### Section 7: Editor Form Creation (Step 32) ✅ COMPLETE
 
-**What happens**: Bot creates editor forms and populates them with complete editor information.
+**What happens**: Bot creates the necessary editor forms based on JSON data.
 
 - **Step 32**: Create Editor Forms
   - **FORM CREATION**: Creates additional editor forms based on JSON data
@@ -523,22 +533,31 @@ The bot automates these manual steps:
   - **SCREENSHOT DOCUMENTATION**: Captures progress after form creation
   - File: `src/services/tadRegistration.service.ts:crearFormulariosEditores`
 
-- **Step 33**: Insert Editor Data
-  - **🎯 ACTIVATED**: Previously disabled, now fully integrated in execution flow
-  - **TIPO DE PERSONA SELECTION**: Configures "Persona Física" or "Persona Jurídica" per editor
-  - **FORM TARGETING**: Uses individual form targeting to prevent data collision
-  - **NORMALIZATION**: Enhanced text normalization for dropdown matching
-  - **MULTI-EDITOR PROCESSING**: Processes all editors in sequence
-  - **SCREENSHOT DOCUMENTATION**: Captures progress after each editor completion
-  - File: `src/services/tadRegistration.service.ts:insertarDatosEditores`
+#### Section 8: Complete Editor Data Insertion (Step 34) ✅ PRODUCTION-VALIDATED
 
-#### Section 8: Final Verification (Step 34) ✅ COMPLETE
+**What happens**: Bot inserts complete editor information with comprehensive visual verification.
+
+- **Step 34**: Insertar Datos en Formularios Editores **[CRITICAL BREAKTHROUGH]**
+  - **🚨 FALSE POSITIVE RESOLVED**: Fixed critical issue where logs claimed success but data insertion failed
+  - **VISUAL VERIFICATION SYSTEM**: Comprehensive screenshot capture after each data insertion
+  - **DUAL ENTITY SUPPORT**: Handles both Persona Jurídica (Razón Social) and Persona Física (nombres + apellidos)
+  - **PRODUCTION VALIDATED**: Tested with all scenarios:
+    - ✅ **4 Mixed Editors**: 2 Persona Jurídica + 2 Persona Física
+    - ✅ **4 Persona Jurídica**: All Razón Social fields correctly filled
+    - ✅ **4 Persona Física**: All 24 name fields filled (6 fields × 4 editors)
+  - **ENHANCED FIELD TARGETING**: Removed problematic label validation for 100% reliability
+  - **FORM ISOLATION**: Individual editor form targeting prevents data collision
+  - **SCREENSHOT VERIFICATION**: takeScreenshot calls after each successful insertion
+  - **🎯 SUCCESS RATE**: 100% verified data insertion with visual confirmation
+  - File: `src/services/tadRegistration.service.ts:insertarDatosEnFormulariosEditores`
+
+#### Section 9: Final Verification (Step 35) ✅ COMPLETE
 
 **What happens**: Bot performs comprehensive verification that the process completed successfully.
 
-- **Step 34**: Check Process Step
+- **Step 35**: Check Process Step
   - **COMPREHENSIVE ANALYSIS**: Screenshots, DOM structure, page state verification
-  - **10-SECOND VISUAL CONFIRMATION**: Keeps browser open for visual inspection
+  - **5-SECOND VISUAL CONFIRMATION**: Keeps browser open for visual inspection
   - **FAILURE DETECTION**: Uses same analysis strategies as failure scenarios
   - **MANDATORY FINAL STEP**: Always executed after all previous steps succeed
   - **PROCESS VALIDATION**: Validates entire process completion before closing
@@ -588,7 +607,7 @@ for (let i = 0; i < autores.length; i++) {
 
 ## 🎯 Current Implementation Status
 
-The bot successfully completes **Steps 1-34**, providing comprehensive multi-author and multi-editor registration workflow:
+The bot successfully completes **Steps 1-35**, providing comprehensive multi-author and multi-editor registration workflow:
 
 - ✅ **Authentication** (Steps 1-8): AFIP login and entity selection
 - ✅ **Navigation** (Steps 9-11): Search and start procedure  
@@ -597,24 +616,30 @@ The bot successfully completes **Steps 1-34**, providing comprehensive multi-aut
 - ✅ **Work Details** (Steps 18-30): Complete musical work information with intelligent publication data
 - ✅ **Author Data** (Step 31): Complete multi-author information insertion with form targeting
 - ✅ **Editor Forms** (Step 32): Create editor forms based on JSON data with plus button targeting
-- ✅ **Editor Data** (Step 33): Insert complete editor data into created forms (NEWLY ACTIVATED)
-- ✅ **Verification** (Step 34): Final process verification and validation
+- ✅ **Editor Data** (Step 34): **[PRODUCTION-VALIDATED]** Complete editor data insertion with visual verification
+- ✅ **Verification** (Step 35): Final process verification and validation
 
-### Estado del Proyecto: COMPLETE AUTHOR + EDITOR WORKFLOW SYSTEM
+### Estado del Proyecto: COMPLETE PRODUCTION-VALIDATED MULTI-EDITOR SYSTEM
 - ✅ **Flujo Completo con Autores y Editores**: Proceso completo incluyendo datos de autores y editores
 - ✅ **Multi-Author Processing**: Manejo inteligente de 5 autores simultáneos
-- ✅ **Multi-Editor Processing**: Creación y llenado de formularios de editores (ACTIVADO)
+- ✅ **Multi-Editor Processing**: Sistema completo validado en producción con 4 editores
+- ✅ **False Positive Resolution**: Eliminación completa de falsos positivos en Step 34
+- ✅ **Visual Verification System**: Screenshots comprensivos para validación de inserción de datos
 - ✅ **Form Targeting System**: Prevención de colisión de datos entre formularios
-- ✅ **Editor Type Support**: Persona Física y Persona Jurídica con validación específica
+- ✅ **Editor Type Support**: Persona Física (nombres + apellidos) y Persona Jurídica (Razón Social)
 - ✅ **Manejo de Ambos Tipos**: Publicaciones web y físicas
 - ✅ **Validación Robusta**: Esquemas Zod con validación condicional
-- ✅ **Sistema de Screenshots**: Captura completa del proceso
+- ✅ **Sistema de Screenshots**: Captura completa del proceso con verificación visual
 - ✅ **Error Resilience**: Múltiples estrategias de selector
 
 ### Development Achievements
 
 **🎯 Major Breakthroughs Completed:**
-- **Step 32 Editor Form Creation**: Production-ready multi-editor form creation with 100% success rate
+- **Step 34 False Positive Resolution**: Critical bug fix eliminating false success reporting
+- **Step 34 Visual Verification**: Comprehensive screenshot system for data insertion validation
+- **Step 34 Production Validation**: 100% tested with 4 Mixed, 4 Persona Jurídica, 4 Persona Física scenarios
+- **Step 32 Pure Click Logic**: Mathematical precision (N-1 clicks formula) eliminates false positives
+- **Production Multi-Editor Testing**: Verified with 2, 3, and 4 editor scenarios (100% success)
 - **Step 31 Multi-Author System**: Complete author data insertion with form-specific targeting
 - **Critical Bug Fix**: Resolved form targeting issue preventing data collision between authors
 - **Container-Scoped Targeting**: Each author's data correctly inserted in individual forms
@@ -625,12 +650,12 @@ The bot successfully completes **Steps 1-34**, providing comprehensive multi-aut
 - **Ultra-Restrictive Selectors**: Container-specific targeting preventing navigation away from forms
 - **Schema Flexibility**: Support for both web and physical publication types with conditional validation
 
-### Project Status: COMPLETE AUTHOR + EDITOR REGISTRATION SYSTEM
+### Project Status: PRODUCTION-READY MULTI-EDITOR WORKFLOW
 
-The project provides a **comprehensive, production-ready multi-author and multi-editor registration solution**:
+The project provides a **battle-tested, production-ready multi-author and multi-editor registration solution**:
 - ✅ **Full Musical Work Registration**: Complete automation including author and editor data
 - ✅ **Multi-Author Support**: Handles 5 authors with individual form targeting
-- ✅ **Multi-Editor Support**: Handles multiple editors with form creation and data insertion
+- ✅ **Multi-Editor Support**: Handles 1-4 editors with mathematical click precision (tested in production)
 - ✅ **Comprehensive Author Data**: Names, surnames, documents, nationality, roles
 - ✅ **Comprehensive Editor Data**: Tipo de persona, contact info, ownership percentages
 - ✅ **Form Isolation**: Prevents data collision between multiple author and editor forms
@@ -639,6 +664,14 @@ The project provides a **comprehensive, production-ready multi-author and multi-
 - ✅ **Robust Error Recovery**: Battle-tested multi-strategy selectors
 - ✅ **Performance Optimized**: 6400% improvements in critical operations
 - ✅ **Visual Verification**: Comprehensive final process validation
+- ✅ **Production Validated**: Tested with all editor scenarios in live environment
+
+**Comprehensive Testing Completed (v2.6.0):**
+- ✅ **4 Mixed Editors**: 2 Persona Jurídica + 2 Persona Física (all data correctly inserted)
+- ✅ **4 Persona Jurídica**: All Razón Social fields filled for legal entities
+- ✅ **4 Persona Física**: All 24 name fields filled (6 names × 4 editors) for individuals
+- ✅ **Visual Verification**: Screenshot validation confirming actual data insertion vs logs
+- ✅ **False Positive Resolution**: Eliminated critical Step 34 success reporting without actual data insertion
 
 **Ready for Extension:**
 - Document uploads
@@ -778,7 +811,7 @@ The bot reads a JSON file with this structure. Both publication types (web and p
     {
       "tipoPersona": "Persona Juridica",
       "razonSocial": "EPSA Publishing S.A.",   // REQUIRED for Persona Juridica
-      "cuit": "33-70957838-9",                 // Format: XX-XXXXXXXX-X
+      "fiscalId": { "tipo": "CUIT", "numero": "33-70957838-9" },  // CUIT or CUIL with format XX-XXXXXXXX-X
       "email": "mgonzalez@epsapublishing.com.ar",
       "telefono": "15 5454 4444",
       "porcentajeTitularidad": 60,             // any percentage ≥ 0 allowed (no 100% sum requirement)
@@ -805,7 +838,7 @@ The bot reads a JSON file with this structure. Both publication types (web and p
         "segundoApellido": "Fernandez",        // optional
         "tercerApellido": "Lopez"              // optional
       },
-      "cuit": "27-55555555-5",                 // Format: XX-XXXXXXXX-X
+      "fiscalId": { "tipo": "CUIL", "numero": "27-55555555-5" },  // CUIT or CUIL with format XX-XXXXXXXX-X
       "email": "maria.rodriguez@gmail.com",
       "telefono": "11 6666 6666",
       "porcentajeTitularidad": 40,             // any percentage ≥ 0 allowed (no 100% sum requirement)

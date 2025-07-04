@@ -22,7 +22,7 @@
         "segundoApellido": "García",
         "tercerApellido": "López"
       },
-      "fiscalId": { "tipo": "CUIT", "numero": "20-11111111-1" },
+      "cuit": "20-11111111-1",
       "nacionalidad": "Argentina",
       "rol": "Música y Letra"
     },
@@ -37,7 +37,7 @@
         "segundoApellido": "de", 
         "tercerApellido": "la Cruz" 
       },
-      "fiscalId": { "tipo": "CUIL", "numero": "27-22222222-2" },
+      "cuit": "27-22222222-2",
       "nacionalidad": "Argentino",
       "rol": "Letra"
     },
@@ -52,7 +52,7 @@
         "segundoApellido": "Johnson",
         "tercerApellido": "Brown"
       },
-      "fiscalId": { "tipo": "Extranjero", "numero": "00-12345678-0" },
+      "cuit": "00-12345678-0",
       "nacionalidad": "Estados Unidos",
       "rol": "Música"
     },
@@ -67,7 +67,7 @@
         "segundoApellido": "Morales",
         "tercerApellido": "Silva"
       },
-      "fiscalId": { "tipo": "CDI", "numero": "30-33333333-3" },
+      "cuit": "30-33333333-3",
       "nacionalidad": "Argentina",
       "rol": "Letra"
     },
@@ -82,7 +82,7 @@
         "segundoApellido": "Martin",
         "tercerApellido": "Bernard"
       },
-      "fiscalId": { "tipo": "Extranjero", "numero": "00-55555555-5" },
+      "cuit": "00-55555555-5",
       "nacionalidad": "Francia",
       "rol": "Música"
     }

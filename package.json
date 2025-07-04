@@ -1,6 +1,6 @@
 {
   "name": "registro-obras-bot",
-  "version": "2.5.5",
+  "version": "2.6.0",
   "description": "Bot de automatización de trámites gubernamentales de Argentina",
   "main": "dist/main.js",
   "scripts": {

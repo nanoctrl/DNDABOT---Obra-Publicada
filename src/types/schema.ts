@@ -93,7 +93,7 @@ const ApellidoSchema = z.object({
   tercerApellido: z.string().optional()
 });
 
-// Schema for fiscal ID
+// Schema for fiscal ID (authors)
 const FiscalIdSchema = z.object({
   tipo: z.enum(['CUIT', 'CUIL', 'CDI', 'Extranjero', 'Fallecido']),
   numero: z.string().min(1)
@@ -110,6 +110,7 @@ const FiscalIdSchema = z.object({
     message: 'Documentos argentinos (CUIT, CUIL, CDI, Fallecido) deben tener formato XX-XXXXXXXX-X. Documentos extranjeros pueden tener cualquier formato.'
   }
 );
+
 
 // Schema for address
 const DomicilioSchema = z.object({
@@ -149,7 +150,7 @@ export const EditorSchema = z.object({
   // For Persona Fisica (3 names + 3 surnames like authors)
   nombre: NombreSchema.optional(),
   apellido: ApellidoSchema.optional(),
-  cuit: z.string().regex(/^\d{2}-\d{8}-\d{1}$/),
+  cuit: z.string().regex(/^\d{2}-\d{8}-\d{1}$/, 'El formato debe ser XX-XXXXXXXX-X'),
   email: z.string().email(),
   telefono: z.string().min(1),
   porcentajeTitularidad: z.number().min(0), // Any percentage allowed, no need to sum 100%
