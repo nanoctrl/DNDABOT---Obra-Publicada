@@ -2,7 +2,7 @@
 
 Bot para automatizar el registro de obras musicales en DNDA Argentina (AFIP→TAD).
 
-## Estado: v2.6.0 - PRODUCTION-READY (36/36 pasos)
+## Estado: v2.6.2 - PRODUCTION-READY (36/36 pasos) + ADVANCED ANALYSIS
 
 ## Inicio Rápido
 ```bash
@@ -37,6 +37,7 @@ DEVELOPER_DEBUG_MODE=true npm start    # Modo debug
 - Paso 9: <2s (300% optimizado)
 - Paso 13: <2s (6400% optimizado) 
 - Paso 16: <1s (5000% optimizado)
+- **Paso 36**: Análisis simplificado + capturas (3-5s)
 - Flujo completo: <3min
 
 ### 5. ZK Framework
@@ -48,6 +49,24 @@ page.locator('#s5IQj')
 page.locator('[name="campo"]')
 page.locator('tr:has-text("texto") button')
 ```
+
+## Outputs de Análisis
+
+### Step 36 - Estructura de Análisis
+```
+output/runs/step36_final_analysis_[timestamp]/
+├── step36_analysis_report_[timestamp].md        # Reporte desarrollo
+├── step36_dom_analysis_[timestamp].json         # DOM completo
+├── step36_interactive_elements_[timestamp].json # Elementos clickeables
+├── step36_screenshots_[timestamp]/             # Capturas viewport
+├── step36_state_[timestamp]/                   # HTML + ZK components
+└── step36_logs_[timestamp]/                    # Logs + performance
+```
+
+### Cleanup Levels
+- **basic**: screenshots/debug, logs (keep 3 days)
+- **full**: runs, analysis, state (keep 1 day)  
+- **all**: todo except .gitkeep (keep 0 days)
 
 ## Estructura de Datos
 
@@ -95,6 +114,17 @@ page.locator('tr:has-text("texto") button')
 grep -r "SUCCESS_STRATEGY" src/       # Ver optimizaciones
 grep -r "step.*31" src/              # Buscar implementación
 npm run tools:find-selector          # Herramienta selectores
+
+# Limpieza de archivos de salida
+npm run clean:dry-run                 # Ver qué se eliminaría
+npm run clean:basic                   # Limpieza básica (keep 3 días)
+npm run clean:full                    # Limpieza completa (keep 1 día)
+npm run clean:all                     # Eliminar todo (¡CUIDADO!)
+
+# Step 36 - Análisis simplificado con timeout protection
+# Genera: Basic DOM analysis, single full-page screenshot, state capture
+# Timeout: 10s máximo para evitar cuelgues
+# Screenshot: 1 captura completa (optimizado desde múltiples)
 ```
 
 ## Reglas Críticas

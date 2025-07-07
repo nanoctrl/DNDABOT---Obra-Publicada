@@ -10,6 +10,8 @@ import { executeWithInteractiveSupport } from '../common/interactiveMode';
 import { getStepTracker } from '../common/stepTracker';
 import { ObraFormService } from './obraFormService';
 import { analyzeStepFailure, analyzeDepositoDigitalContext } from '../common/pageAnalyzer';
+import fs from 'fs/promises';
+import path from 'path';
 
 // Import Page Objects
 import { 
@@ -62,7 +64,7 @@ export class TadRegistrationService {
       await this.insertarDatosCompletosEditoresDocumento(tramiteData.editores || []);
       
       // SECCIÓN 6: Verificación final (Paso 36)
-      await this.checkProcessStep();
+      await this.lastStepResultsAndStatusAnalyzer();
       
       // MODO DESARROLLO: Pausar para siguiente paso  
       if (config.DEVELOPER_DEBUG_MODE) {
@@ -2069,110 +2071,623 @@ export class TadRegistrationService {
   }
 
   /**
-   * Paso 35: Insertar Datos Completos de Editores - Documento
-   * Configura los campos "Tipo de documento" para cada editor
+   * Paso 35: Insertar Tipo de Documento para TODOS los Editores
+   * TODO: Implementar inserción de tipo documento para editores
    */
   private async insertarDatosCompletosEditoresDocumento(editores: any[]): Promise<void> {
     const stepTracker = getStepTracker();
     stepTracker.startStep(35);
     
     this.logger.info('\n============================================================');
-    this.logger.info('📋 PASO 35/36: Insertar Datos Completos de Editores - Documento');
+    this.logger.info('📋 PASO 35: Insertar Tipo de Documento para Editores');
     this.logger.info('============================================================');
 
     try {
       if (!editores || editores.length === 0) {
-        this.logger.info('✅ No hay editores para procesar en Step 35');
-        stepTracker.logSuccess(35, 'No editores disponibles');
+        this.logger.info('✅ No hay editores para procesar');
+        stepTracker.logSuccess(35, 'No hay editores');
         return;
       }
 
-      this.logger.info(`🔍 Procesando ${editores.length} editores para configuración de tipo de documento...`);
-
-      // TODO: Implement Step 35 logic here
-
-      this.logger.info(`✅ Step 35 completado: Placeholder implementado`);
-      stepTracker.logSuccess(35, `Placeholder Step 35 ejecutado para ${editores.length} editores`);
+      this.logger.info(`🚧 PLACEHOLDER: Paso 35 pendiente de implementación`);
+      this.logger.info(`📊 Editores a procesar: ${editores.length}`);
+      
+      // TODO: Implementar la lógica de inserción de tipo documento
+      
+      stepTracker.logSuccess(35, `Paso 35 placeholder completado`);
 
     } catch (error) {
-      this.logger.error('❌ Error en Step 35 - insertar datos documento editores:', error);
-      await takeScreenshot(this.page, 'error_step35_documento_editores', 'error');
-      stepTracker.logError(35, `Error insertando datos documento editores: ${(error as Error).message}`);
+      this.logger.error('❌ Error en Paso 35:', error);
+      await takeScreenshot(this.page, 'error_step35_tipo_documento', 'error');
+      stepTracker.logError(35, `Error: ${(error as Error).message}`);
       throw error;
     }
   }
 
   /**
-   * Paso 36: Check Process Step - Verificar proceso completado exitosamente
-   * Este paso analiza la página con todas las estrategias disponibles para verificar el estado final
-   * y mantiene el navegador abierto por 5 segundos para inspección visual
+   * Paso 36: Last Step Results and Status Analyzer
+   * Analiza comprehensivamente el estado final de la página para desarrollo de pasos futuros
+   * Genera capturas completas, análisis DOM, logs y estado para informar próximos desarrollos
    */
-  private async checkProcessStep(): Promise<void> {
-    this.logger.info('🔍 PASO 36: Verificando proceso completado exitosamente...');
+  private async lastStepResultsAndStatusAnalyzer(): Promise<void> {
+    this.logger.info('\n============================================================');
+    this.logger.info('🔍 PASO 36: Last Step Results and Status Analyzer');
+    this.logger.info('============================================================');
+    
     const stepTracker = getStepTracker();
     stepTracker.startStep(36);
     
     try {
-      // Tomar screenshot del estado final
-      await takeScreenshot(this.page, 'final_state_verification', 'milestone');
+      // Generate unique timestamp for all outputs
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      this.logger.info(`📅 Analysis timestamp: ${timestamp}`);
       
-      // Análisis básico de la página (sin usar analyzeStepFailure que es para fallos)
-      this.logger.info('📊 Ejecutando análisis básico de la página...');
-      this.logger.info('✅ Análisis de página completado');
+      // Create analysis directory structure
+      const analysisDir = path.join(config.OUTPUT_DIR, 'runs', `step36_final_analysis_${timestamp}`);
+      await fs.mkdir(analysisDir, { recursive: true });
       
-      // Generar snapshot de debug si está habilitado
-      if (config.DEVELOPER_DEBUG_MODE) {
-        await createDebugSnapshot(
-          this.page, 
-          'final_process_verification',
-          'Verificación final del proceso completado'
-        );
-      }
+      // Create subdirectories
+      const screenshotsDir = path.join(analysisDir, `step36_screenshots_${timestamp}`);
+      const logsDir = path.join(analysisDir, `step36_logs_${timestamp}`);
+      const stateDir = path.join(analysisDir, `step36_state_${timestamp}`);
       
-      // Log del estado de todos los elementos importantes
-      this.logger.info('🔍 Verificando elementos clave de la página...');
+      await Promise.all([
+        fs.mkdir(screenshotsDir, { recursive: true }),
+        fs.mkdir(logsDir, { recursive: true }),
+        fs.mkdir(stateDir, { recursive: true })
+      ]);
       
-      // Verificar que estamos en la página correcta
-      const pageTitle = await this.page.title();
-      this.logger.info(`📄 Título de página: ${pageTitle}`);
+      this.logger.info(`📁 Analysis directory created: ${analysisDir}`);
       
-      // Verificar URL actual
-      const currentUrl = this.page.url();
-      this.logger.info(`🌐 URL actual: ${currentUrl}`);
+      // === A) SIMPLIFIED DOM STRUCTURE ANALYSIS ===
+      this.logger.info('📊 Starting DOM structure analysis...');
       
-      // Contar elementos del formulario con timeout
-      let formElements = 0;
-      let zkElements = 0;
+      let pageAnalysis: any = {};
+      let interactiveElements: any = {};
+      let totalElements = 0;
+      
       try {
-        formElements = await this.page.locator('input, select, textarea, button').count();
-        this.logger.info(`📝 Elementos de formulario encontrados: ${formElements}`);
+        // Use timeout to prevent hanging
+        const analysisPromise = Promise.race([
+          this.performSafePageAnalysis(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Analysis timeout')), 10000))
+        ]);
         
-        // Verificar elementos ZK (framework TAD)
-        zkElements = await this.page.locator('[class*="z-"]').count();
-        this.logger.info(`⚡ Elementos ZK Framework encontrados: ${zkElements}`);
-      } catch (countError) {
-        this.logger.warn('No se pudieron contar elementos (no crítico):', countError);
+        const analysis = await analysisPromise as any;
+        pageAnalysis = analysis.pageAnalysis;
+        interactiveElements = analysis.interactiveElements;
+        totalElements = analysis.totalElements;
+        
+        // Save DOM analysis
+        await fs.writeFile(
+          path.join(analysisDir, `step36_dom_analysis_${timestamp}.json`),
+          JSON.stringify(pageAnalysis, null, 2),
+          'utf-8'
+        );
+
+        await fs.writeFile(
+          path.join(analysisDir, `step36_interactive_elements_${timestamp}.json`),
+          JSON.stringify(interactiveElements, null, 2),
+          'utf-8'
+        );
+        
+        this.logger.info(`✅ DOM analysis completed - ${totalElements} elements cataloged`);
+        this.logger.info(`🎯 Interactive elements: ${interactiveElements.clickableElements?.length || 0} clickable, ${interactiveElements.inputs?.length || 0} inputs, ${interactiveElements.zkComponents?.length || 0} ZK components`);
+        
+      } catch (error) {
+        this.logger.warn(`⚠️ DOM analysis failed or timed out: ${(error as Error).message}`);
+        // Create minimal analysis data
+        pageAnalysis = {
+          url: this.page.url(),
+          title: await this.page.title().catch(() => 'Unknown'),
+          timestamp: new Date().toISOString(),
+          error: (error as Error).message
+        };
+        interactiveElements = {
+          buttons: [],
+          inputs: [],
+          selects: [],
+          links: [],
+          zkComponents: [],
+          clickableElements: []
+        };
+        totalElements = 0;
+        
+        // Save minimal analysis
+        await fs.writeFile(
+          path.join(analysisDir, `step36_dom_analysis_${timestamp}.json`),
+          JSON.stringify(pageAnalysis, null, 2),
+          'utf-8'
+        );
+        
+        this.logger.info('✅ Minimal DOM analysis saved due to timeout/error');
       }
       
-      // Log final de éxito con información del proceso
-      this.logger.info('✅ PROCESO VERIFICADO - Estado final de la página analizado exitosamente');
-      this.logger.info(`📋 Total de elementos analizados: ${formElements} formulario, ${zkElements} ZK`);
-      this.logger.info('🔍 Verificación completa del proceso finalizada');
+      // === B) SINGLE FULL-PAGE SCREENSHOT ===
+      this.logger.info('📸 Capturing single full-page screenshot...');
       
-      // Mantener navegador abierto por 10 segundos para inspección visual
+      // Single full-page screenshot
+      await this.captureSingleFullPageScreenshot(screenshotsDir, timestamp);
+      
+      this.logger.info('✅ Screenshot capture completed');
+      
+      // === C) ENHANCED LOGGING AND STATE CAPTURE ===
+      this.logger.info('📝 Starting enhanced logging and state capture...');
+      
+      // Capture current page state
+      await this.capturePageState(stateDir, timestamp);
+      
+      // Export session logs
+      await this.exportSessionLogs(logsDir, timestamp);
+      
+      // Capture console messages and performance metrics
+      await this.captureRuntimeData(logsDir, timestamp);
+      
+      this.logger.info('✅ Logging and state capture completed');
+      
+      // === D) SMART ANALYSIS FEATURES ===
+      this.logger.info('🧠 Starting smart analysis features...');
+      
+      const smartAnalysis = await this.performSmartAnalysis();
+      
+      // === GENERATE COMPREHENSIVE ANALYSIS REPORT ===
+      const analysisReport = this.generateAnalysisReport({
+        timestamp,
+        pageAnalysis,
+        interactiveElements,
+        smartAnalysis,
+        analysisDir,
+        totalElements
+      });
+      
+      await fs.writeFile(
+        path.join(analysisDir, `step36_analysis_report_${timestamp}.md`),
+        analysisReport,
+        'utf-8'
+      );
+      
+      // Log summary
+      this.logger.info('✅ COMPREHENSIVE ANALYSIS COMPLETED');
+      this.logger.info(`📁 All outputs saved to: ${analysisDir}`);
+      this.logger.info(`📊 Analysis summary:`);
+      this.logger.info(`   - DOM elements analyzed: ${totalElements}`);
+      this.logger.info(`   - Interactive elements: ${interactiveElements.clickableElements.length}`);
+      this.logger.info(`   - ZK components: ${interactiveElements.zkComponents.length}`);
+      this.logger.info(`   - Current URL: ${smartAnalysis.currentUrl}`);
+      this.logger.info(`   - Page title: ${smartAnalysis.pageTitle}`);
+      
+      // Maintain browser open for visual inspection
       this.logger.info('⏳ Manteniendo navegador abierto por 10 segundos para verificación visual...');
       await new Promise(resolve => setTimeout(resolve, 10000));
       this.logger.info('✅ Período de verificación visual completado');
       
-      stepTracker.logSuccess(36, 'Proceso verificado exitosamente con análisis completo');
-      this.logger.info('✅ PASO 36 COMPLETADO - Check Process Step ejecutado exitosamente');
+      stepTracker.logSuccess(36, `Comprehensive analysis completed - ${totalElements} elements analyzed`);
+      this.logger.info('✅ PASO 36 COMPLETADO - Last Step Results and Status Analyzer ejecutado exitosamente');
       
     } catch (error) {
-      this.logger.error('Error en Check Process Step:', error);
-      await takeScreenshot(this.page, 'check_process_step_error', 'error');
-      stepTracker.logError(36, `Error: ${error}`);
+      this.logger.error('❌ Error en Last Step Results and Status Analyzer:', error);
+      await takeScreenshot(this.page, 'step36_analyzer_error', 'error');
+      stepTracker.logError(36, `Error: ${(error as Error).message}`);
       throw error;
     }
+  }
+
+  /**
+   * Capture single full-page screenshot
+   */
+  private async captureSingleFullPageScreenshot(screenshotsDir: string, timestamp: string): Promise<void> {
+    try {
+      // Scroll to top to ensure consistent starting position
+      await this.page.evaluate(() => window.scrollTo(0, 0));
+      await this.page.waitForTimeout(1000); // Wait for scroll to complete
+      
+      // Take single full-page screenshot
+      const screenshotPath = path.join(screenshotsDir, `step36_complete_page_${timestamp}.png`);
+      await this.page.screenshot({ 
+        path: screenshotPath, 
+        fullPage: true // Capture entire page in one screenshot
+      });
+      
+      this.logger.info(`📸 Captured complete page screenshot: step36_complete_page_${timestamp}.png`);
+      
+    } catch (error) {
+      this.logger.warn('⚠️ Error capturing full page screenshot:', error);
+      // Fallback to viewport screenshot if fullPage fails
+      try {
+        const fallbackPath = path.join(screenshotsDir, `step36_viewport_fallback_${timestamp}.png`);
+        await this.page.screenshot({ 
+          path: fallbackPath, 
+          fullPage: false 
+        });
+        this.logger.info(`📸 Captured fallback viewport screenshot: step36_viewport_fallback_${timestamp}.png`);
+      } catch (fallbackError) {
+        this.logger.error('❌ Failed to capture any screenshot:', fallbackError);
+      }
+    }
+  }
+
+  /**
+   * Capture current page state (HTML, accessibility tree, etc.)
+   */
+  private async capturePageState(stateDir: string, timestamp: string): Promise<void> {
+    try {
+      // Capture HTML
+      const html = await this.page.content();
+      await fs.writeFile(
+        path.join(stateDir, `step36_page_state_${timestamp}.html`),
+        html,
+        'utf-8'
+      );
+
+      // Capture accessibility tree
+      const accessibilityTree = await this.page.accessibility.snapshot();
+      await fs.writeFile(
+        path.join(stateDir, `step36_accessibility_tree_${timestamp}.json`),
+        JSON.stringify(accessibilityTree, null, 2),
+        'utf-8'
+      );
+
+      // Capture ZK components state
+      const zkComponents = await this.page.evaluate(() => {
+        const zkElements = document.querySelectorAll('[class*="z-"]');
+        return Array.from(zkElements).map((el) => ({
+          tagName: el.tagName,
+          className: el.className,
+          id: el.id,
+          textContent: el.textContent?.substring(0, 100),
+          visible: (el as HTMLElement).offsetParent !== null,
+          bounds: el.getBoundingClientRect()
+        }));
+      });
+
+      await fs.writeFile(
+        path.join(stateDir, `step36_zk_components_${timestamp}.json`),
+        JSON.stringify(zkComponents, null, 2),
+        'utf-8'
+      );
+
+      this.logger.info(`✅ Page state captured - HTML (${Math.round(html.length / 1024)}KB), ${zkComponents.length} ZK components`);
+    } catch (error) {
+      this.logger.warn('⚠️ Error capturing page state:', error);
+    }
+  }
+
+  /**
+   * Export session logs from memory/files
+   */
+  private async exportSessionLogs(logsDir: string, timestamp: string): Promise<void> {
+    try {
+      // Copy current log files
+      const logFiles = ['app.log', 'error.log', 'success.log'];
+      
+      for (const logFile of logFiles) {
+        const sourcePath = path.join(config.OUTPUT_DIR, 'logs', logFile);
+        const destPath = path.join(logsDir, `step36_${logFile.replace('.log', '')}_${timestamp}.log`);
+        
+        try {
+          await fs.copyFile(sourcePath, destPath);
+          this.logger.info(`📄 Exported log file: ${logFile}`);
+        } catch (copyError) {
+          this.logger.debug(`Could not copy ${logFile}:`, copyError);
+        }
+      }
+    } catch (error) {
+      this.logger.warn('⚠️ Error exporting session logs:', error);
+    }
+  }
+
+  /**
+   * Capture console messages and performance metrics
+   */
+  private async captureRuntimeData(logsDir: string, timestamp: string): Promise<void> {
+    try {
+      // Capture console messages (if we had them collected)
+      const consoleMessages: any[] = []; // Would need to implement console message collection
+      await fs.writeFile(
+        path.join(logsDir, `step36_console_messages_${timestamp}.json`),
+        JSON.stringify(consoleMessages, null, 2),
+        'utf-8'
+      );
+
+      // Capture basic performance metrics
+      const performanceMetrics = await this.page.evaluate(() => {
+        const navigation = performance.getEntriesByType('navigation')[0] as any;
+        return {
+          loadTime: navigation ? navigation.loadEventEnd - navigation.loadEventStart : 0,
+          domContentLoaded: navigation ? navigation.domContentLoadedEventEnd - navigation.domContentLoadedEventStart : 0,
+          responseTime: navigation ? navigation.responseEnd - navigation.requestStart : 0,
+          timestamp: Date.now(),
+          url: window.location.href,
+          userAgent: navigator.userAgent
+        };
+      });
+
+      await fs.writeFile(
+        path.join(logsDir, `step36_performance_metrics_${timestamp}.json`),
+        JSON.stringify(performanceMetrics, null, 2),
+        'utf-8'
+      );
+
+      this.logger.info(`⚡ Performance metrics captured - Load time: ${performanceMetrics.loadTime}ms`);
+    } catch (error) {
+      this.logger.warn('⚠️ Error capturing runtime data:', error);
+    }
+  }
+
+  /**
+   * Perform smart analysis of current page state
+   */
+  private async performSmartAnalysis(): Promise<any> {
+    try {
+      const analysis = {
+        // Navigation context
+        currentUrl: this.page.url(),
+        pageTitle: await this.page.title(),
+        
+        // Process progress assessment
+        progressIndicators: await this.assessProcessProgress(),
+        
+        // Available next steps
+        availableActions: await this.identifyAvailableActions(),
+        
+        // Error detection
+        errorStates: await this.detectErrorStates(),
+        
+        // Form states
+        formStates: await this.analyzeFormStates()
+      };
+
+      return analysis;
+    } catch (error) {
+      this.logger.warn('⚠️ Error in smart analysis:', error);
+      return {
+        currentUrl: this.page.url(),
+        pageTitle: 'Error getting title',
+        error: (error as Error).message
+      };
+    }
+  }
+
+  /**
+   * Assess process progress based on page elements
+   */
+  private async assessProcessProgress(): Promise<any> {
+    try {
+      // Count completed vs remaining steps indicators
+      const stepIndicators = await this.page.locator('.step, .wizard-step, [class*="step"]').all();
+      const completedSteps = await this.page.locator('.step.completed, .step.done, [class*="step"][class*="complete"]').count();
+      
+      return {
+        totalStepIndicators: stepIndicators.length,
+        completedSteps,
+        progressPercentage: stepIndicators.length > 0 ? Math.round((completedSteps / stepIndicators.length) * 100) : null
+      };
+    } catch (error) {
+      return { error: (error as Error).message };
+    }
+  }
+
+  /**
+   * Identify available actions for next steps
+   */
+  private async identifyAvailableActions(): Promise<any> {
+    try {
+      const actions = {
+        clickableButtons: await this.page.locator('button:visible, input[type="button"]:visible, input[type="submit"]:visible').count(),
+        emptyInputs: await this.page.locator('input:visible[value=""], textarea:visible').count(),
+        dropdowns: await this.page.locator('select:visible, .z-combobox:visible').count(),
+        navigationLinks: await this.page.locator('a:visible[href]').count(),
+        zkComponents: await this.page.locator('[class*="z-"]:visible').count()
+      };
+
+      return actions;
+    } catch (error) {
+      return { error: (error as Error).message };
+    }
+  }
+
+  /**
+   * Detect error states on the page
+   */
+  private async detectErrorStates(): Promise<any> {
+    try {
+      const errors = {
+        errorMessages: await this.page.locator('.error, .alert-danger, [class*="error"]').count(),
+        validationErrors: await this.page.locator('.validation-error, .invalid').count(),
+        requiredFields: await this.page.locator('input[required]:visible, [class*="required"]:visible').count(),
+        emptyRequiredFields: await this.page.locator('input[required]:visible[value=""]').count()
+      };
+
+      return errors;
+    } catch (error) {
+      return { error: (error as Error).message };
+    }
+  }
+
+  /**
+   * Analyze current form states
+   */
+  private async analyzeFormStates(): Promise<any> {
+    try {
+      const forms = await this.page.locator('form').all();
+      const formStates = [];
+
+      for (let i = 0; i < forms.length; i++) {
+        const form = forms[i];
+        const inputs = await form.locator('input, select, textarea').all();
+        let filledInputs = 0;
+
+        for (const input of inputs) {
+          const value = await input.inputValue();
+          if (value && value.trim()) {
+            filledInputs++;
+          }
+        }
+
+        formStates.push({
+          formIndex: i,
+          totalInputs: inputs.length,
+          filledInputs,
+          completionPercentage: inputs.length > 0 ? Math.round((filledInputs / inputs.length) * 100) : 0
+        });
+      }
+
+      return {
+        totalForms: forms.length,
+        formDetails: formStates
+      };
+    } catch (error) {
+      return { error: (error as Error).message };
+    }
+  }
+
+  /**
+   * Perform safe page analysis with basic element counting
+   */
+  private async performSafePageAnalysis(): Promise<any> {
+    try {
+      // Basic page info
+      const pageAnalysis = {
+        url: this.page.url(),
+        title: await this.page.title(),
+        timestamp: new Date().toISOString(),
+        basicInfo: {
+          forms: await this.page.locator('form').count(),
+          buttons: await this.page.locator('button, input[type="button"], input[type="submit"]').count(),
+          inputs: await this.page.locator('input, textarea, select').count(),
+          links: await this.page.locator('a[href]').count(),
+          zkComponents: await this.page.locator('[class*="z-"]').count()
+        }
+      };
+
+      // Basic interactive elements (limited to prevent hanging)
+      const [buttons, inputs, selects, links] = await Promise.all([
+        this.page.locator('button:visible, input[type="button"]:visible, input[type="submit"]:visible').all().then(elements => 
+          Promise.all(elements.slice(0, 10).map(async el => ({ // Limit to first 10
+            tag: await el.evaluate(e => e.tagName.toLowerCase()),
+            text: await el.textContent().then(text => text?.substring(0, 50)),
+            visible: await el.isVisible()
+          })))
+        ),
+        this.page.locator('input:visible, textarea:visible').all().then(elements =>
+          Promise.all(elements.slice(0, 10).map(async el => ({
+            tag: await el.evaluate(e => e.tagName.toLowerCase()),
+            type: await el.getAttribute('type'),
+            name: await el.getAttribute('name'),
+            visible: await el.isVisible()
+          })))
+        ),
+        this.page.locator('select:visible').all().then(elements =>
+          Promise.all(elements.slice(0, 10).map(async el => ({
+            tag: 'select',
+            name: await el.getAttribute('name'),
+            visible: await el.isVisible()
+          })))
+        ),
+        this.page.locator('a[href]:visible').all().then(elements =>
+          Promise.all(elements.slice(0, 10).map(async el => ({
+            tag: 'a',
+            href: await el.getAttribute('href'),
+            text: await el.textContent().then(text => text?.substring(0, 50)),
+            visible: await el.isVisible()
+          })))
+        )
+      ]);
+
+      const interactiveElements = {
+        buttons,
+        inputs,
+        selects,
+        links,
+        zkComponents: [], // Skip complex ZK analysis to prevent hanging
+        clickableElements: [...buttons, ...links]
+      };
+
+      const totalElements = pageAnalysis.basicInfo.forms + pageAnalysis.basicInfo.buttons + 
+                           pageAnalysis.basicInfo.inputs + pageAnalysis.basicInfo.links;
+
+      return { pageAnalysis, interactiveElements, totalElements };
+    } catch (error) {
+      throw new Error(`Safe analysis failed: ${(error as Error).message}`);
+    }
+  }
+
+  /**
+   * Generate comprehensive analysis report
+   */
+  private generateAnalysisReport(data: any): string {
+    const { timestamp, interactiveElements, smartAnalysis, analysisDir, totalElements } = data;
+
+    return `# Step 36: Last Step Results and Status Analysis Report
+
+**Analysis Timestamp:** ${timestamp}
+**Analysis Directory:** ${analysisDir}
+
+## Page Overview
+- **URL:** ${smartAnalysis.currentUrl}
+- **Title:** ${smartAnalysis.pageTitle}
+- **Total DOM Elements:** ${totalElements}
+
+## Interactive Elements Summary
+- **Clickable Elements:** ${interactiveElements.clickableElements.length}
+- **Input Fields:** ${interactiveElements.inputs.length}
+- **Select Dropdowns:** ${interactiveElements.selects.length}
+- **Navigation Links:** ${interactiveElements.links.length}
+- **ZK Framework Components:** ${interactiveElements.zkComponents.length}
+
+## Process Progress Assessment
+${smartAnalysis.progressIndicators ? `
+- **Total Step Indicators:** ${smartAnalysis.progressIndicators.totalStepIndicators}
+- **Completed Steps:** ${smartAnalysis.progressIndicators.completedSteps}
+- **Progress Percentage:** ${smartAnalysis.progressIndicators.progressPercentage || 'Unknown'}%
+` : 'Progress indicators not detected'}
+
+## Available Actions for Next Steps
+${smartAnalysis.availableActions ? `
+- **Clickable Buttons:** ${smartAnalysis.availableActions.clickableButtons}
+- **Empty Input Fields:** ${smartAnalysis.availableActions.emptyInputs}
+- **Dropdown Menus:** ${smartAnalysis.availableActions.dropdowns}
+- **Navigation Links:** ${smartAnalysis.availableActions.navigationLinks}
+- **ZK Components:** ${smartAnalysis.availableActions.zkComponents}
+` : 'Available actions analysis failed'}
+
+## Error States & Validation
+${smartAnalysis.errorStates ? `
+- **Error Messages:** ${smartAnalysis.errorStates.errorMessages}
+- **Validation Errors:** ${smartAnalysis.errorStates.validationErrors}
+- **Required Fields:** ${smartAnalysis.errorStates.requiredFields}
+- **Empty Required Fields:** ${smartAnalysis.errorStates.emptyRequiredFields}
+` : 'Error detection analysis failed'}
+
+## Form States Analysis
+${smartAnalysis.formStates ? `
+- **Total Forms:** ${smartAnalysis.formStates.totalForms}
+${smartAnalysis.formStates.formDetails.map((form: any, index: number) => `
+- **Form ${index + 1}:** ${form.filledInputs}/${form.totalInputs} fields filled (${form.completionPercentage}% complete)`).join('')}
+` : 'Form analysis failed'}
+
+## Next Steps Development Recommendations
+
+Based on this analysis, the following areas should be considered for Step 37+ development:
+
+1. **Form Completion:** ${smartAnalysis.errorStates?.emptyRequiredFields > 0 ? `${smartAnalysis.errorStates.emptyRequiredFields} required fields need completion` : 'All required fields appear filled'}
+
+2. **Available Interactions:** ${smartAnalysis.availableActions?.clickableButtons > 0 ? `${smartAnalysis.availableActions.clickableButtons} clickable elements available for next actions` : 'Limited clickable elements detected'}
+
+3. **ZK Framework Elements:** ${interactiveElements.zkComponents.length} ZK components detected - review for dropdown/button interactions
+
+4. **Process Continuation:** ${smartAnalysis.progressIndicators?.progressPercentage ? `Process appears ${smartAnalysis.progressIndicators.progressPercentage}% complete` : 'Process completion status unclear'}
+
+## Files Generated
+- \`step36_dom_analysis_${timestamp}.json\` - Complete DOM structure
+- \`step36_interactive_elements_${timestamp}.json\` - All interactive elements catalog
+- \`step36_screenshots_${timestamp}/\` - Full page and section screenshots
+- \`step36_state_${timestamp}/\` - HTML, accessibility tree, ZK components
+- \`step36_logs_${timestamp}/\` - Session logs and performance metrics
+
+---
+*Generated by Step 36: Last Step Results and Status Analyzer*
+`;
   }
 
   /**

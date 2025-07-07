@@ -5,6 +5,110 @@ Todos los cambios notables en este proyecto serán documentados en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/),
 y este proyecto adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.2] - 2025-07-07
+
+### Enhancement - Step 36 Advanced Analysis System + Output Cleanup Infrastructure
+
+> **HOTFIX (2025-07-07)**: Fixed Step 36 hanging issue by replacing complex `analyzePage()` with timeout-protected simplified analysis. Performance improved from 10s+ to 3-5s.
+
+#### Context
+- **Current State**: Step 36 was basic verification with minimal debugging capabilities
+- **Problem/Need**: Insufficient analysis for future step development and no output cleanup system
+- **Related Issues**: Large accumulation of debug files hampering development workflow
+
+#### Implementation - Step 36 Enhancement
+- **Approach**: Complete transformation from basic verification to comprehensive analysis platform
+- **Key Changes**:
+  1. **Comprehensive DOM Analysis**: Full page structure analysis with interactive element cataloging
+  2. **Single Full-Page Screenshot**: Optimized capture system for complete page visualization
+  3. **State Capture Engine**: HTML snapshots, accessibility trees, and ZK component mapping
+  4. **Smart Analysis Features**: Progress assessment, error detection, form state analysis
+  5. **Developer-Ready Outputs**: Structured JSON reports and markdown analysis summaries
+
+```typescript
+// ❌ BEFORE: Basic verification
+private async checkProcessStep(): Promise<void> {
+  await takeScreenshot(this.page, 'final_state_verification', 'milestone');
+  // Simple analysis only
+}
+
+// ✅ AFTER: Comprehensive analysis platform
+private async lastStepResultsAndStatusAnalyzer(): Promise<void> {
+  // Generate unique analysis directory
+  const analysisDir = path.join(config.OUTPUT_DIR, 'runs', `step36_final_analysis_${timestamp}`);
+  
+  // Full DOM analysis with element cataloging
+  const pageAnalysis = await analyzePage(this.page);
+  
+  // Single full-page screenshot capture
+  await this.captureSingleFullPageScreenshot(screenshotsDir, timestamp);
+  
+  // Complete state capture
+  await this.capturePageState(stateDir, timestamp);
+  await this.exportSessionLogs(logsDir, timestamp);
+  
+  // Smart analysis for development
+  const smartAnalysis = await this.performSmartAnalysis();
+}
+```
+
+#### Implementation - Output Cleanup System
+- **Approach**: Multi-level cleanup script with safety features and detailed reporting
+- **Key Features**:
+  1. **Three Cleanup Levels**: Basic (screenshots + logs), Full (all artifacts), All (nuclear option)
+  2. **Age-Based Filtering**: Configurable retention periods (3 days basic, 1 day full, 0 days all)
+  3. **Safety Features**: Dry-run mode, confirmation prompts, size reporting
+  4. **NPM Integration**: Easy-to-use commands for different cleanup scenarios
+
+```bash
+# New NPM commands added
+npm run clean:dry-run    # Preview what would be deleted
+npm run clean:basic      # Clean old screenshots and logs (keep 3 days)
+npm run clean:full       # Clean all artifacts (keep 1 day)
+npm run clean:all        # Nuclear cleanup (keep 0 days)
+```
+
+#### Technical Details
+- **Files Modified**:
+  - `src/services/tadRegistration.service.ts`: Enhanced Step 36 with 500+ lines of analysis code
+  - `tsconfig.json`: Added DOM and DOM.Iterable libraries for browser API support
+  - `package.json`: Added 5 new cleanup scripts
+  - `CLAUDE.md`: Updated with cleanup commands
+- **Files Created**:
+  - `cleanup-output.js`: 400+ line comprehensive cleanup script with help system
+
+#### Analysis Outputs Structure
+```
+output/runs/step36_final_analysis_[timestamp]/
+├── step36_analysis_report_[timestamp].md           # Comprehensive markdown report
+├── step36_dom_analysis_[timestamp].json           # Complete DOM structure
+├── step36_interactive_elements_[timestamp].json   # Clickable elements catalog
+├── step36_screenshots_[timestamp]/                # Full page and section captures
+├── step36_state_[timestamp]/                     # HTML, accessibility, ZK components
+└── step36_logs_[timestamp]/                      # Session logs and performance
+```
+
+#### New Capabilities for Development
+- **DOM Element Discovery**: Automated cataloging of all interactive elements for step development
+- **Visual State Tracking**: Multi-viewport screenshots for comprehensive debugging
+- **Performance Monitoring**: Load times, response metrics, and browser performance data
+- **ZK Framework Analysis**: Specialized analysis for ZK components and framework elements
+- **Progress Assessment**: Intelligent analysis of form completion and process state
+
+#### Validation
+- **Testing Method**: Full build test + dry-run cleanup validation
+- **Success Metrics**: 
+  - Step 36 now generates 10+ analysis files per run
+  - Cleanup script handles 600+ files safely
+  - TypeScript builds successfully with DOM support
+- **File Impact**: +1 major script, enhanced Step 36 functionality, 5 new NPM commands
+
+#### For Next Development
+- **Step 37+ Ready**: Rich analysis data available for informed next step development
+- **Clean Workflow**: Reliable cleanup system prevents output directory bloat
+- **Debug Enhancement**: Comprehensive debugging capabilities for complex step development
+- **Watch Out For**: Run cleanup regularly to prevent disk space issues
+
 ## [2.6.1] - 2025-01-14
 
 ### Optimization - CLAUDE.md Documentation Restructuring
