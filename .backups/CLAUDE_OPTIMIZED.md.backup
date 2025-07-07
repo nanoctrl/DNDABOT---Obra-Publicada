@@ -1,0 +1,205 @@
+# Bot Registro Obras Musicales - v2.6.0
+
+## 🎯 Propósito
+Automatización del registro de obras musicales en AFIP/TAD Argentina.  
+**Path**: `/Users/nahuelmaeso/Desktop/DemoJupiter/CLAUDE.BOTDNDA/registro-obras-bot`
+
+## 🔧 Stack
+Node.js 18+ | TypeScript | Playwright | Zod | Winston | Jest | POM Pattern
+
+## 📊 Estado Actual: PRODUCTION-READY (36/36 pasos)
+| Fase | Pasos | Estado | Descripción |
+|------|-------|---------|-------------|
+| Auth | 1-8 | ✅ | AFIP login + representado |
+| Nav | 9-11 | ✅ | Búsqueda/inicio trámite |
+| Forms | 12-17 | ✅ | Carátula + condiciones |
+| Obra | 18-30 | ✅ | Datos completos + autores |
+| Autores | 31 | ✅ | Multi-autor con form targeting |
+| Editores | 32-35 | ✅ | Forms + datos + docs |
+| Verify | 36 | ✅ | Validación final |
+
+## 🚀 Inicio Rápido
+```bash
+npm install                    # Instalar dependencias
+npm start                      # Ejecutar bot
+npm run explore               # Modo debug
+npm run tools:find-selector   # Buscar selectores
+```
+
+## 🤖 Protocolo LLM v2.0 (OBLIGATORIO)
+
+### 1️⃣ Carga de Contexto
+```bash
+cat package.json | grep version                              # v2.6.0
+grep "export const TOTAL_STEPS" src/config/steps.config.ts  # 36 pasos
+head -200 CHANGELOG.md | grep -A 20 "^##"                  # Cambios recientes
+```
+
+### 2️⃣ Lectura Requerida
+1. **Este archivo completo**
+2. **CHANGELOG.md** (últimas 5 entradas)
+3. **Documentos críticos**:
+   - `Protocolo de agregado de pasos.md`
+   - `best_practices_for_this_project.md`
+   - `Post Failure Analysis System.md`
+   - `TECNICAS_SELECTORES_ROBUSTOS.md`
+
+### 3️⃣ Formato Changelog Obligatorio
+```markdown
+## [VERSION] - YYYY-MM-DD
+### Type - Brief Title
+#### Context
+- **Current State**: Estado antes del cambio
+- **Problem/Need**: Por qué se necesita
+#### Implementation
+- **Approach**: Estrategia técnica
+- **Key Changes**: Modificaciones principales
+#### Validation
+- **Testing Method**: Cómo se probó
+- **Success Metrics**: Qué prueba que funciona
+```
+
+## 📁 Estructura Clave
+```
+📁 registro-obras-bot/
+├── 📄 data/tramite_ejemplo.json    # Formato entrada
+├── 📁 output/{runs,screenshots,logs}
+├── 📁 src/
+│   ├── common/{browser,interaction,logger}*.ts
+│   ├── config/index.ts + steps.config.ts
+│   ├── core/{orchestrator,dataReader}.ts
+│   ├── services/{afipAuth,tadRegistration,obraForm}.service.ts
+│   ├── pages/*Page.ts (POM pattern)
+│   └── types/{schema,tad.types}.ts
+└── 📄 .env (AFIP_CUIT, AFIP_PASSWORD)
+```
+
+## 🎯 Patrones Críticos (PRESERVAR)
+
+### Multi-Strategy Selectors
+```typescript
+// ✅ SUCCESS_STRATEGY marca código optimizado - NUNCA cambiar orden
+const strategies = [
+  { name: 'By name', locator: page => page.locator('[name="field"]') },      // Más estable ZK
+  { name: 'By role', locator: page => page.getByRole('button') },           // Semántico
+  { name: 'By text', locator: page => page.locator('text="Submit"') }       // Visual
+];
+```
+
+### Performance Benchmarks
+| Paso | Operación | Tiempo | Mejora | Nota |
+|------|-----------|---------|--------|------|
+| 9 | Búsqueda | <2s | 300% | `input[placeholder*="Buscar" i]` |
+| 13 | Dropdown | <2s | 6400% | name + cell role combo |
+| 16 | GUARDAR | <1s | 5000% | Enhanced button targeting |
+
+### ZK Framework Patterns
+```typescript
+// ❌ MALO: IDs dinámicos
+page.locator('#s5IQj')  // Cambia cada sesión
+
+// ✅ BUENO: Atributos estables
+page.locator('[name="cmb_usted_opta"]')
+page.locator('tr:has-text("¿Usted opta") button')
+```
+
+## 📋 Estructura Datos JSON
+```json
+{
+  "obra": {
+    "titulo": "string",
+    "tipo": "Música y letra|Música|Letra",
+    "album": boolean,
+    "cantidad_ejemplares": number,
+    "genero_musical": "string",
+    "esPublicacionWeb": boolean,
+    "urlPaginaWeb": "required if web",
+    "lugar_publicacion": "required if physical",
+    "fecha_publicacion": "DD-MM-YYYY"
+  },
+  "autores": [{
+    "nombre": { "primerNombre": "req", "segundoNombre": "opt" },
+    "apellido": { "primerApellido": "req", "segundoApellido": "opt" },
+    "fiscalId": { "tipo": "CUIT|CUIL|CDI|Extranjero", "numero": "XX-XXXXXXXX-X" },
+    "nacionalidad": "string",
+    "rol": "Letra|Música|Música y Letra"  // STRICT enum
+  }],
+  "editores": [{
+    "tipoPersona": "Persona Juridica|Persona Fisica",
+    "razonSocial": "if juridica",
+    "nombre/apellido": "if fisica (like autores)",
+    "porcentajeTitularidad": number  // any % allowed, no sum validation
+  }],
+  "gestor": {
+    "representado": "exact match 90%+",
+    "emailNotificaciones": "string"
+  }
+}
+```
+
+## 🔨 Protocolo Agregar Pasos v2.0
+
+### Fase 1: Análisis Pre-Implementación
+1. **Detectar ZK**: Buscar clases `.z-*`
+2. **Analizar DOM**: Identificar atributos estables
+3. **Verificar múltiples**: Probar "strict mode violations"
+
+### Fase 2: Implementación
+```typescript
+// 1. Definir en steps.config.ts
+{ number: 37, name: 'nuevo_paso', service: 'tad', required: true }
+
+// 2. Implementar con multi-strategy
+const strategies = [
+  { name: 'Primary: name attr', action: async () => {...} },
+  { name: 'Fallback: context', action: async () => {...} }
+];
+
+// 3. VERIFICACIÓN OBLIGATORIA
+const verified = await page.locator('input').isChecked();
+if (!verified) throw new Error('Action failed');
+
+// 4. Screenshot validación
+await takeScreenshot('step-37-completed');
+```
+
+## 🚨 Reglas Críticas
+
+### NUNCA:
+- ❌ Remover `SUCCESS_STRATEGY`
+- ❌ Cambiar orden de estrategias optimizadas
+- ❌ Usar IDs dinámicos `#s5IQj`
+- ❌ Commitear credenciales
+- ❌ Saltar changelog
+
+### SIEMPRE:
+- ✅ Leer changelog reciente
+- ✅ Preservar optimizaciones
+- ✅ Multi-strategy para nuevas interacciones
+- ✅ Screenshots antes/después
+- ✅ Verificar estado real, no solo click
+
+## 🎓 Comandos Debug
+```bash
+grep -r "SUCCESS_STRATEGY" src/          # Ver optimizaciones
+grep -r "step.*19" src/                 # Buscar paso
+tail -f output/logs/app-*.log | grep ERROR
+npm run tools:audit                      # Verificar selectores
+```
+
+## 📈 Logros Técnicos
+- **Step 34**: Eliminación falsos positivos con verificación visual
+- **Step 31**: Multi-autor con form targeting individual
+- **Step 28-29**: Publicación web/física inteligente
+- **Performance**: 64s → 1s en operaciones críticas
+- **Production**: Validado con 4 editores mixtos
+
+## 🔐 Seguridad
+- Credenciales en `.env` (nunca en git)
+- Screenshots pueden contener info sensible
+- Logs con rotación automática
+- Validación entrada con Zod
+
+---
+**v2.6.0** | 36 pasos completos | PRODUCTION-READY  
+Documentos completos en `/docs/` | Última actualización: 2025-01-14

@@ -111,6 +111,11 @@ const FiscalIdSchema = z.object({
   }
 );
 
+// Schema for fiscal ID (editors - only CUIT or CUIL)
+const EditorFiscalIdSchema = z.object({
+  tipo: z.enum(['CUIT', 'CUIL']),
+  numero: z.string().regex(/^\d{2}-\d{8}-\d{1}$/, 'El formato debe ser XX-XXXXXXXX-X')
+});
 
 // Schema for address
 const DomicilioSchema = z.object({
@@ -150,7 +155,7 @@ export const EditorSchema = z.object({
   // For Persona Fisica (3 names + 3 surnames like authors)
   nombre: NombreSchema.optional(),
   apellido: ApellidoSchema.optional(),
-  cuit: z.string().regex(/^\d{2}-\d{8}-\d{1}$/, 'El formato debe ser XX-XXXXXXXX-X'),
+  fiscalId: EditorFiscalIdSchema,
   email: z.string().email(),
   telefono: z.string().min(1),
   porcentajeTitularidad: z.number().min(0), // Any percentage allowed, no need to sum 100%

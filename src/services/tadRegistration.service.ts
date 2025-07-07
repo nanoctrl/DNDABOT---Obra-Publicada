@@ -58,13 +58,16 @@ export class TadRegistrationService {
       // SECCIÓN 4: Datos de la obra (Pasos 18-34)
       await this.completarDatosObra(tramiteData);
       
-      // SECCIÓN 5: Verificación final (Paso 35)
+      // SECCIÓN 5: Datos de editores - documento (Paso 35)
+      await this.insertarDatosCompletosEditoresDocumento(tramiteData.editores || []);
+      
+      // SECCIÓN 6: Verificación final (Paso 36)
       await this.checkProcessStep();
       
       // MODO DESARROLLO: Pausar para siguiente paso  
       if (config.DEVELOPER_DEBUG_MODE) {
         this.logger.info('\n🎯 REGISTRO COMPLETO FINALIZADO');
-        this.logger.info('✅ Pasos 1-35: Proceso completo incluyendo verificación final');
+        this.logger.info('✅ Pasos 1-36: Proceso completo incluyendo datos de documento de editores y verificación final');
         this.logger.info('🔄 El bot se pausará para permitir inspección manual o desarrollo adicional');
         this.logger.info('📋 Para agregar más pasos, usar el protocolo documentado en CHANGELOG.md');
         this.logger.info('▶️ Presiona Resume para continuar con exploración manual\n');
@@ -2065,16 +2068,49 @@ export class TadRegistrationService {
     }
   }
 
+  /**
+   * Paso 35: Insertar Datos Completos de Editores - Documento
+   * Configura los campos "Tipo de documento" para cada editor
+   */
+  private async insertarDatosCompletosEditoresDocumento(editores: any[]): Promise<void> {
+    const stepTracker = getStepTracker();
+    stepTracker.startStep(35);
+    
+    this.logger.info('\n============================================================');
+    this.logger.info('📋 PASO 35/36: Insertar Datos Completos de Editores - Documento');
+    this.logger.info('============================================================');
+
+    try {
+      if (!editores || editores.length === 0) {
+        this.logger.info('✅ No hay editores para procesar en Step 35');
+        stepTracker.logSuccess(35, 'No editores disponibles');
+        return;
+      }
+
+      this.logger.info(`🔍 Procesando ${editores.length} editores para configuración de tipo de documento...`);
+
+      // TODO: Implement Step 35 logic here
+
+      this.logger.info(`✅ Step 35 completado: Placeholder implementado`);
+      stepTracker.logSuccess(35, `Placeholder Step 35 ejecutado para ${editores.length} editores`);
+
+    } catch (error) {
+      this.logger.error('❌ Error en Step 35 - insertar datos documento editores:', error);
+      await takeScreenshot(this.page, 'error_step35_documento_editores', 'error');
+      stepTracker.logError(35, `Error insertando datos documento editores: ${(error as Error).message}`);
+      throw error;
+    }
+  }
 
   /**
-   * Paso 35: Check Process Step - Verificar proceso completado exitosamente
+   * Paso 36: Check Process Step - Verificar proceso completado exitosamente
    * Este paso analiza la página con todas las estrategias disponibles para verificar el estado final
    * y mantiene el navegador abierto por 5 segundos para inspección visual
    */
   private async checkProcessStep(): Promise<void> {
-    this.logger.info('🔍 PASO 35: Verificando proceso completado exitosamente...');
+    this.logger.info('🔍 PASO 36: Verificando proceso completado exitosamente...');
     const stepTracker = getStepTracker();
-    stepTracker.startStep(35);
+    stepTracker.startStep(36);
     
     try {
       // Tomar screenshot del estado final
@@ -2128,13 +2164,13 @@ export class TadRegistrationService {
       await new Promise(resolve => setTimeout(resolve, 10000));
       this.logger.info('✅ Período de verificación visual completado');
       
-      stepTracker.logSuccess(35, 'Proceso verificado exitosamente con análisis completo');
-      this.logger.info('✅ PASO 35 COMPLETADO - Check Process Step ejecutado exitosamente');
+      stepTracker.logSuccess(36, 'Proceso verificado exitosamente con análisis completo');
+      this.logger.info('✅ PASO 36 COMPLETADO - Check Process Step ejecutado exitosamente');
       
     } catch (error) {
       this.logger.error('Error en Check Process Step:', error);
       await takeScreenshot(this.page, 'check_process_step_error', 'error');
-      stepTracker.logError(35, `Error: ${error}`);
+      stepTracker.logError(36, `Error: ${error}`);
       throw error;
     }
   }

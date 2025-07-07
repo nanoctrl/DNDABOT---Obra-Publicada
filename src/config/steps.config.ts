@@ -296,6 +296,14 @@ export const STEP_DEFINITIONS: StepDefinition[] = [
   },
   {
     number: 35,
+    name: 'insert_editors_document_data',
+    description: 'Insert Editors Document Data',
+    service: 'tad',
+    required: true,
+    retryable: true
+  },
+  {
+    number: 36,
     name: 'check_process_step',
     description: 'Verificar proceso completado exitosamente',
     service: 'obra',

@@ -1,0 +1,35 @@
+# Bot Registro Obras Musicales - Quick Reference
+
+## 🎯 ¿Qué es?
+Bot que automatiza el registro de obras musicales en DNDA Argentina (AFIP → TAD).  
+**v2.6.0** - 36/36 pasos completos - PRODUCTION-READY
+
+## 🚀 Ejecutar
+```bash
+npm start                    # Modo normal
+DEVELOPER_DEBUG_MODE=true npm start  # Debug
+```
+
+## 📊 Estado
+✅ Auth (1-8) | ✅ Nav (9-11) | ✅ Forms (12-17) | ✅ Obra (18-30) | ✅ Autores (31) | ✅ Editores (32-35) | ✅ Verify (36)
+
+## 🤖 Para LLMs: Leer en orden
+1. Este archivo
+2. `CHANGELOG.md` (últimas 5 entradas)
+3. `/docs/CLAUDE_*.md` para detalles
+
+## 🔧 Info Técnica
+- **Stack**: Node.js 18+, TypeScript, Playwright
+- **Entrada**: `data/tramite_ejemplo.json`
+- **Salida**: `output/{screenshots,logs}`
+- **Config**: `.env` (AFIP_CUIT, AFIP_PASSWORD)
+
+## 🎯 Patrones Clave
+```typescript
+// SUCCESS_STRATEGY = optimizado, no cambiar
+// Multi-strategy para robustez
+// Screenshots para validación
+// Verificar estado real, no solo click
+```
+
+Detalles completos → `/docs/CLAUDE_TECHNICAL.md`

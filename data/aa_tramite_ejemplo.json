@@ -34,7 +34,10 @@
     {
       "tipoPersona": "Persona Juridica",
       "razonSocial": "Editorial Musical S.A.",
-      "cuit": "33-11111111-1",
+      "fiscalId": {
+        "tipo": "CUIT",
+        "numero": "33-11111111-1"
+      },
       "email": "editor1@test.com",
       "telefono": "11 1111 1111",
       "porcentajeTitularidad": 25,
@@ -60,7 +63,10 @@
         "segundoApellido": "",
         "tercerApellido": ""
       },
-      "cuit": "27-22222222-2",
+      "fiscalId": {
+        "tipo": "CUIL",
+        "numero": "27-22222222-2"
+      },
       "email": "editor2@test.com",
       "telefono": "11 2222 2222",
       "porcentajeTitularidad": 25,
@@ -77,7 +83,10 @@
     {
       "tipoPersona": "Persona Juridica",
       "razonSocial": "Distribuidora Musical S.R.L.",
-      "cuit": "30-33333333-3",
+      "fiscalId": {
+        "tipo": "CUIT",
+        "numero": "30-33333333-3"
+      },
       "email": "editor3@test.com",
       "telefono": "11 3333 3333",
       "porcentajeTitularidad": 25,
@@ -103,7 +112,10 @@
         "segundoApellido": "",
         "tercerApellido": ""
       },
-      "cuit": "20-44444444-4",
+      "fiscalId": {
+        "tipo": "CUIL",
+        "numero": "20-44444444-4"
+      },
       "email": "editor4@test.com",
       "telefono": "11 4444 4444",
       "porcentajeTitularidad": 25,
