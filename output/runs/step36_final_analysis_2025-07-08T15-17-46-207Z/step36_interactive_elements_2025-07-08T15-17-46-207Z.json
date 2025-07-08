@@ -1,0 +1,179 @@
+{
+  "buttons": [],
+  "inputs": [
+    {
+      "tag": "input",
+      "type": "text",
+      "name": "titulo_obra_musical",
+      "visible": true
+    },
+    {
+      "tag": "input",
+      "type": "text",
+      "name": "tipo_obra_musical",
+      "visible": true
+    },
+    {
+      "tag": "input",
+      "type": "text",
+      "name": "album_musical",
+      "visible": true
+    },
+    {
+      "tag": "input",
+      "type": "text",
+      "name": "cant_ejemplares_musical",
+      "visible": true
+    },
+    {
+      "tag": "input",
+      "type": "text",
+      "name": "genero_musical",
+      "visible": true
+    },
+    {
+      "tag": "input",
+      "type": "text",
+      "name": "fecha_publicacion_musical",
+      "visible": true
+    },
+    {
+      "tag": "input",
+      "type": "text",
+      "name": "numero_internacional_musical",
+      "visible": true
+    },
+    {
+      "tag": "input",
+      "type": "checkbox",
+      "name": "original_integrantes",
+      "visible": true
+    },
+    {
+      "tag": "input",
+      "type": "checkbox",
+      "name": "adaptacion_letra_integrantes",
+      "visible": true
+    },
+    {
+      "tag": "input",
+      "type": "checkbox",
+      "name": "adaptacion_musica_integrantes",
+      "visible": true
+    }
+  ],
+  "selects": [],
+  "links": [
+    {
+      "tag": "a",
+      "href": "/tramitesadistancia/nuevo-tramite",
+      "text": "Iniciar trámite",
+      "visible": true
+    },
+    {
+      "tag": "a",
+      "href": "/tramitesadistancia/misTramites",
+      "text": "Mis trámites",
+      "visible": true
+    },
+    {
+      "tag": "a",
+      "href": "/tramitesadistancia/notificaciones",
+      "text": "Notificaciones",
+      "visible": true
+    },
+    {
+      "tag": "a",
+      "href": "/tramitesadistancia/expedientes",
+      "text": "Consulta ",
+      "visible": true
+    },
+    {
+      "tag": "a",
+      "href": "#",
+      "text": "Nahuel Martin MAESO ",
+      "visible": true
+    },
+    {
+      "tag": "a",
+      "href": "#",
+      "text": "\n                 Adjuntar\n              ",
+      "visible": true
+    },
+    {
+      "tag": "a",
+      "href": "#",
+      "text": "\n                 Adjuntar\n              ",
+      "visible": true
+    },
+    {
+      "tag": "a",
+      "href": "#",
+      "text": "\n                 Adjuntar\n              ",
+      "visible": true
+    },
+    {
+      "tag": "a",
+      "href": "#0",
+      "text": "",
+      "visible": true
+    }
+  ],
+  "zkComponents": [],
+  "clickableElements": [
+    {
+      "tag": "a",
+      "href": "/tramitesadistancia/nuevo-tramite",
+      "text": "Iniciar trámite",
+      "visible": true
+    },
+    {
+      "tag": "a",
+      "href": "/tramitesadistancia/misTramites",
+      "text": "Mis trámites",
+      "visible": true
+    },
+    {
+      "tag": "a",
+      "href": "/tramitesadistancia/notificaciones",
+      "text": "Notificaciones",
+      "visible": true
+    },
+    {
+      "tag": "a",
+      "href": "/tramitesadistancia/expedientes",
+      "text": "Consulta ",
+      "visible": true
+    },
+    {
+      "tag": "a",
+      "href": "#",
+      "text": "Nahuel Martin MAESO ",
+      "visible": true
+    },
+    {
+      "tag": "a",
+      "href": "#",
+      "text": "\n                 Adjuntar\n              ",
+      "visible": true
+    },
+    {
+      "tag": "a",
+      "href": "#",
+      "text": "\n                 Adjuntar\n              ",
+      "visible": true
+    },
+    {
+      "tag": "a",
+      "href": "#",
+      "text": "\n                 Adjuntar\n              ",
+      "visible": true
+    },
+    {
+      "tag": "a",
+      "href": "#0",
+      "text": "",
+      "visible": true
+    }
+  ]
+}

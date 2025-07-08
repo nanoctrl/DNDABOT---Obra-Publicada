@@ -1,0 +1,1151 @@
+{
+  "role": "WebArea",
+  "name": "Mis Trámites - Trámites a Distancia",
+  "children": [
+    {
+      "role": "image",
+      "name": "Brand"
+    },
+    {
+      "role": "heading",
+      "name": "Trámites a Distancia Presidencia de la Nación",
+      "level": 1
+    },
+    {
+      "role": "link",
+      "name": "INICIAR TRÁMITE"
+    },
+    {
+      "role": "link",
+      "name": "MIS TRÁMITES"
+    },
+    {
+      "role": "link",
+      "name": "NOTIFICACIONES"
+    },
+    {
+      "role": "link",
+      "name": "CONSULTA"
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "children": [
+        {
+          "role": "text",
+          "name": "EPSA PUBLISHING S A"
+        },
+        {
+          "role": "text",
+          "name": "▼"
+        }
+      ]
+    },
+    {
+      "role": "link",
+      "name": "Nahuel Martin MAESO "
+    },
+    {
+      "role": "heading",
+      "name": "Inscripción de obra publicada - Musical",
+      "level": 2
+    },
+    {
+      "role": "tab",
+      "name": ""
+    },
+    {
+      "role": "tab",
+      "name": ""
+    },
+    {
+      "role": "tab",
+      "name": ""
+    },
+    {
+      "role": "heading",
+      "name": "Adjuntá documentación:",
+      "level": 4
+    },
+    {
+      "role": "text",
+      "name": "Los documentos marcados con "
+    },
+    {
+      "role": "text",
+      "name": " son obligatorios."
+    },
+    {
+      "role": "text",
+      "name": "Datos del Trámite "
+    },
+    {
+      "role": "text",
+      "name": " COMPLETAR"
+    },
+    {
+      "role": "text",
+      "name": "Datos de la obra a registrar "
+    },
+    {
+      "role": "text",
+      "name": " COMPLETAR"
+    },
+    {
+      "role": "text",
+      "name": "Datos de la obra publicada Musical"
+    },
+    {
+      "role": "text",
+      "name": "Título"
+    },
+    {
+      "role": "textbox",
+      "name": "",
+      "value": "Test Step 35 - 1 Autor 4 Editores"
+    },
+    {
+      "role": "text",
+      "name": "Tipo de obra"
+    },
+    {
+      "role": "textbox",
+      "name": "",
+      "readonly": true,
+      "value": "Música y letra"
+    },
+    {
+      "role": "text",
+      "name": "Álbum"
+    },
+    {
+      "role": "textbox",
+      "name": "",
+      "readonly": true,
+      "value": "Si"
+    },
+    {
+      "role": "text",
+      "name": "Cantidad de ejemplares"
+    },
+    {
+      "role": "textbox",
+      "name": "",
+      "value": "1000"
+    },
+    {
+      "role": "text",
+      "name": "Género Musical"
+    },
+    {
+      "role": "textbox",
+      "name": "",
+      "value": "Test"
+    },
+    {
+      "role": "text",
+      "name": "Fecha de publicación"
+    },
+    {
+      "role": "textbox",
+      "name": "",
+      "value": "15/07/2025"
+    },
+    {
+      "role": "text",
+      "name": "Número Internacional"
+    },
+    {
+      "role": "textbox",
+      "name": ""
+    },
+    {
+      "role": "text",
+      "name": "Obras Integrantes"
+    },
+    {
+      "role": "text",
+      "name": "Original"
+    },
+    {
+      "role": "checkbox",
+      "name": "",
+      "checked": true
+    },
+    {
+      "role": "text",
+      "name": "Adaptación Letra"
+    },
+    {
+      "role": "checkbox",
+      "name": "",
+      "checked": false
+    },
+    {
+      "role": "text",
+      "name": "Adaptación Música"
+    },
+    {
+      "role": "checkbox",
+      "name": "",
+      "checked": false
+    },
+    {
+      "role": "text",
+      "name": "Arreglo"
+    },
+    {
+      "role": "checkbox",
+      "name": "",
+      "checked": false
+    },
+    {
+      "role": "text",
+      "name": "Traducción"
+    },
+    {
+      "role": "checkbox",
+      "name": "",
+      "checked": false
+    },
+    {
+      "role": "text",
+      "name": "Versión"
+    },
+    {
+      "role": "checkbox",
+      "name": "",
+      "checked": false
+    },
+    {
+      "role": "text",
+      "name": "Lugar de Publicación"
+    },
+    {
+      "role": "text",
+      "name": "¿Es una publicación Web?"
+    },
+    {
+      "role": "textbox",
+      "name": "",
+      "readonly": true,
+      "value": "Si"
+    },
+    {
+      "role": "text",
+      "name": "URL de la página web"
+    },
+    {
+      "role": "textbox",
+      "name": "",
+      "value": "https://music.example.com/test-step35"
+    },
+    {
+      "role": "text",
+      "name": "Registros de contratos"
+    },
+    {
+      "role": "text",
+      "name": "Registro N°"
+    },
+    {
+      "role": "textbox",
+      "name": ""
+    },
+    {
+      "role": "text",
+      "name": "Datos del participante"
+    },
+    {
+      "role": "text",
+      "name": "¿Su participación en la obra es bajo un seudónimo?"
+    },
+    {
+      "role": "textbox",
+      "name": "",
+      "readonly": true,
+      "value": "No"
+    },
+    {
+      "role": "text",
+      "name": "Primer Nombre"
+    },
+    {
+      "role": "textbox",
+      "name": "",
+      "value": "Carlos"
+    },
+    {
+      "role": "text",
+      "name": "Segundo Nombre"
+    },
+    {
+      "role": "textbox",
+      "name": "",
+      "value": "Alberto"
+    },
+    {
+      "role": "text",
+      "name": "Tercer Nombre"
+    },
+    {
+      "role": "textbox",
+      "name": ""
+    },
+    {
+      "role": "text",
+      "name": "Primer Apellido"
+    },
+    {
+      "role": "textbox",
+      "name": "",
+      "value": "Rodriguez"
+    },
+    {
+      "role": "text",
+      "name": "Segundo Apellido"
+    },
+    {
+      "role": "textbox",
+      "name": ""
+    },
+    {
+      "role": "text",
+      "name": "Tercer Apellido"
+    },
+    {
+      "role": "textbox",
+      "name": ""
+    },
+    {
+      "role": "text",
+      "name": "Tipo de Documento"
+    },
+    {
+      "role": "textbox",
+      "name": "",
+      "readonly": true,
+      "value": "CUIT"
+    },
+    {
+      "role": "text",
+      "name": "Documento N°"
+    },
+    {
+      "role": "textbox",
+      "name": "",
+      "value": "20-11111111-1"
+    },
+    {
+      "role": "text",
+      "name": "Participación (elegir al menos una opción)"
+    },
+    {
+      "role": "text",
+      "name": "Música"
+    },
+    {
+      "role": "checkbox",
+      "name": "",
+      "checked": true
+    },
+    {
+      "role": "text",
+      "name": "Letra"
+    },
+    {
+      "role": "checkbox",
+      "name": "",
+      "checked": true
+    },
+    {
+      "role": "text",
+      "name": "Datos del Editor"
+    },
+    {
+      "role": "text",
+      "name": "Tipo de persona"
+    },
+    {
+      "role": "textbox",
+      "name": "",
+      "readonly": true,
+      "value": "Persona Jurídica"
+    },
+    {
+      "role": "text",
+      "name": "Razón Social"
+    },
+    {
+      "role": "textbox",
+      "name": "",
+      "value": "Editorial Musical S.A."
+    },
+    {
+      "role": "text",
+      "name": "Tipo de documento"
+    },
+    {
+      "role": "textbox",
+      "name": "",
+      "readonly": true
+    },
+    {
+      "role": "text",
+      "name": "Correo electrónico"
+    },
+    {
+      "role": "textbox",
+      "name": ""
+    },
+    {
+      "role": "text",
+      "name": "Teléfono de contacto"
+    },
+    {
+      "role": "textbox",
+      "name": ""
+    },
+    {
+      "role": "text",
+      "name": "¿Es titular?"
+    },
+    {
+      "role": "textbox",
+      "name": "",
+      "readonly": true
+    },
+    {
+      "role": "text",
+      "name": "Domicilio del editor"
+    },
+    {
+      "role": "text",
+      "name": "Calle y altura"
+    },
+    {
+      "role": "textbox",
+      "name": ""
+    },
+    {
+      "role": "text",
+      "name": "Piso"
+    },
+    {
+      "role": "textbox",
+      "name": ""
+    },
+    {
+      "role": "text",
+      "name": "Departamento"
+    },
+    {
+      "role": "textbox",
+      "name": ""
+    },
+    {
+      "role": "text",
+      "name": "Código Postal"
+    },
+    {
+      "role": "textbox",
+      "name": ""
+    },
+    {
+      "role": "text",
+      "name": "País"
+    },
+    {
+      "role": "textbox",
+      "name": "",
+      "readonly": true
+    },
+    {
+      "role": "text",
+      "name": "Datos del Editor"
+    },
+    {
+      "role": "text",
+      "name": "Tipo de persona"
+    },
+    {
+      "role": "textbox",
+      "name": "",
+      "readonly": true,
+      "value": "Persona Física"
+    },
+    {
+      "role": "text",
+      "name": "Primer nombre"
+    },
+    {
+      "role": "textbox",
+      "name": "",
+      "value": "Maria"
+    },
+    {
+      "role": "text",
+      "name": "Segundo nombre"
+    },
+    {
+      "role": "textbox",
+      "name": "",
+      "value": "Elena"
+    },
+    {
+      "role": "text",
+      "name": "Tercer nombre"
+    },
+    {
+      "role": "textbox",
+      "name": ""
+    },
+    {
+      "role": "text",
+      "name": "Primer apellido"
+    },
+    {
+      "role": "textbox",
+      "name": "",
+      "value": "Fernandez"
+    },
+    {
+      "role": "text",
+      "name": "Segundo apellido"
+    },
+    {
+      "role": "textbox",
+      "name": ""
+    },
+    {
+      "role": "text",
+      "name": "Tercer apellido"
+    },
+    {
+      "role": "textbox",
+      "name": ""
+    },
+    {
+      "role": "text",
+      "name": "Tipo de documento"
+    },
+    {
+      "role": "textbox",
+      "name": "",
+      "readonly": true
+    },
+    {
+      "role": "text",
+      "name": "Nacionalidad"
+    },
+    {
+      "role": "textbox",
+      "name": "",
+      "readonly": true
+    },
+    {
+      "role": "text",
+      "name": "Estado Civil"
+    },
+    {
+      "role": "textbox",
+      "name": "",
+      "readonly": true
+    },
+    {
+      "role": "text",
+      "name": "Correo electrónico"
+    },
+    {
+      "role": "textbox",
+      "name": ""
+    },
+    {
+      "role": "text",
+      "name": "Teléfono de contacto"
+    },
+    {
+      "role": "textbox",
+      "name": ""
+    },
+    {
+      "role": "text",
+      "name": "¿Es titular?"
+    },
+    {
+      "role": "textbox",
+      "name": "",
+      "readonly": true
+    },
+    {
+      "role": "text",
+      "name": "Domicilio del editor"
+    },
+    {
+      "role": "text",
+      "name": "Calle y altura"
+    },
+    {
+      "role": "textbox",
+      "name": ""
+    },
+    {
+      "role": "text",
+      "name": "Piso"
+    },
+    {
+      "role": "textbox",
+      "name": ""
+    },
+    {
+      "role": "text",
+      "name": "Departamento"
+    },
+    {
+      "role": "textbox",
+      "name": ""
+    },
+    {
+      "role": "text",
+      "name": "Código Postal"
+    },
+    {
+      "role": "textbox",
+      "name": ""
+    },
+    {
+      "role": "text",
+      "name": "País"
+    },
+    {
+      "role": "textbox",
+      "name": "",
+      "readonly": true
+    },
+    {
+      "role": "text",
+      "name": "Datos del Editor"
+    },
+    {
+      "role": "text",
+      "name": "Tipo de persona"
+    },
+    {
+      "role": "textbox",
+      "name": "",
+      "readonly": true,
+      "value": "Persona Jurídica"
+    },
+    {
+      "role": "text",
+      "name": "Razón Social"
+    },
+    {
+      "role": "textbox",
+      "name": "",
+      "value": "Distribuidora Musical S.R.L."
+    },
+    {
+      "role": "text",
+      "name": "Tipo de documento"
+    },
+    {
+      "role": "textbox",
+      "name": "",
+      "readonly": true
+    },
+    {
+      "role": "text",
+      "name": "Correo electrónico"
+    },
+    {
+      "role": "textbox",
+      "name": ""
+    },
+    {
+      "role": "text",
+      "name": "Teléfono de contacto"
+    },
+    {
+      "role": "textbox",
+      "name": ""
+    },
+    {
+      "role": "text",
+      "name": "¿Es titular?"
+    },
+    {
+      "role": "textbox",
+      "name": "",
+      "readonly": true
+    },
+    {
+      "role": "text",
+      "name": "Domicilio del editor"
+    },
+    {
+      "role": "text",
+      "name": "Calle y altura"
+    },
+    {
+      "role": "textbox",
+      "name": ""
+    },
+    {
+      "role": "text",
+      "name": "Piso"
+    },
+    {
+      "role": "textbox",
+      "name": ""
+    },
+    {
+      "role": "text",
+      "name": "Departamento"
+    },
+    {
+      "role": "textbox",
+      "name": ""
+    },
+    {
+      "role": "text",
+      "name": "Código Postal"
+    },
+    {
+      "role": "textbox",
+      "name": ""
+    },
+    {
+      "role": "text",
+      "name": "País"
+    },
+    {
+      "role": "textbox",
+      "name": "",
+      "readonly": true
+    },
+    {
+      "role": "text",
+      "name": "Datos del Editor"
+    },
+    {
+      "role": "text",
+      "name": "Tipo de persona"
+    },
+    {
+      "role": "textbox",
+      "name": "",
+      "readonly": true,
+      "value": "Persona Física"
+    },
+    {
+      "role": "text",
+      "name": "Primer nombre"
+    },
+    {
+      "role": "textbox",
+      "name": "",
+      "value": "Juan"
+    },
+    {
+      "role": "text",
+      "name": "Segundo nombre"
+    },
+    {
+      "role": "textbox",
+      "name": "",
+      "value": "Carlos"
+    },
+    {
+      "role": "text",
+      "name": "Tercer nombre"
+    },
+    {
+      "role": "textbox",
+      "name": ""
+    },
+    {
+      "role": "text",
+      "name": "Primer apellido"
+    },
+    {
+      "role": "textbox",
+      "name": "",
+      "focused": true,
+      "value": "Lopez"
+    },
+    {
+      "role": "text",
+      "name": "Segundo apellido"
+    },
+    {
+      "role": "textbox",
+      "name": ""
+    },
+    {
+      "role": "text",
+      "name": "Tercer apellido"
+    },
+    {
+      "role": "textbox",
+      "name": ""
+    },
+    {
+      "role": "text",
+      "name": "Tipo de documento"
+    },
+    {
+      "role": "textbox",
+      "name": "",
+      "readonly": true
+    },
+    {
+      "role": "text",
+      "name": "Nacionalidad"
+    },
+    {
+      "role": "textbox",
+      "name": "",
+      "readonly": true
+    },
+    {
+      "role": "text",
+      "name": "Estado Civil"
+    },
+    {
+      "role": "textbox",
+      "name": "",
+      "readonly": true
+    },
+    {
+      "role": "text",
+      "name": "Correo electrónico"
+    },
+    {
+      "role": "textbox",
+      "name": ""
+    },
+    {
+      "role": "text",
+      "name": "Teléfono de contacto"
+    },
+    {
+      "role": "textbox",
+      "name": ""
+    },
+    {
+      "role": "text",
+      "name": "¿Es titular?"
+    },
+    {
+      "role": "textbox",
+      "name": "",
+      "readonly": true
+    },
+    {
+      "role": "text",
+      "name": "Domicilio del editor"
+    },
+    {
+      "role": "text",
+      "name": "Calle y altura"
+    },
+    {
+      "role": "textbox",
+      "name": ""
+    },
+    {
+      "role": "text",
+      "name": "Piso"
+    },
+    {
+      "role": "textbox",
+      "name": ""
+    },
+    {
+      "role": "text",
+      "name": "Departamento"
+    },
+    {
+      "role": "textbox",
+      "name": ""
+    },
+    {
+      "role": "text",
+      "name": "Código Postal"
+    },
+    {
+      "role": "textbox",
+      "name": ""
+    },
+    {
+      "role": "text",
+      "name": "País"
+    },
+    {
+      "role": "textbox",
+      "name": "",
+      "readonly": true
+    },
+    {
+      "role": "text",
+      "name": "Datos de la impresión"
+    },
+    {
+      "role": "text",
+      "name": "Imprenta/Impresor"
+    },
+    {
+      "role": "textbox",
+      "name": ""
+    },
+    {
+      "role": "text",
+      "name": "Fecha de impresión"
+    },
+    {
+      "role": "textbox",
+      "name": ""
+    },
+    {
+      "role": "text",
+      "name": "Domicilio de impresión"
+    },
+    {
+      "role": "text",
+      "name": "Calle y altura"
+    },
+    {
+      "role": "textbox",
+      "name": ""
+    },
+    {
+      "role": "text",
+      "name": "Piso"
+    },
+    {
+      "role": "textbox",
+      "name": ""
+    },
+    {
+      "role": "text",
+      "name": "Departamento"
+    },
+    {
+      "role": "textbox",
+      "name": ""
+    },
+    {
+      "role": "text",
+      "name": "Código Postal"
+    },
+    {
+      "role": "textbox",
+      "name": ""
+    },
+    {
+      "role": "text",
+      "name": "País"
+    },
+    {
+      "role": "textbox",
+      "name": "",
+      "readonly": true
+    },
+    {
+      "role": "text",
+      "name": "Titular (completar sólo en caso de no ser el editor)"
+    },
+    {
+      "role": "text",
+      "name": "Tipo de persona"
+    },
+    {
+      "role": "textbox",
+      "name": "",
+      "readonly": true
+    },
+    {
+      "role": "text",
+      "name": "Correo electrónico"
+    },
+    {
+      "role": "textbox",
+      "name": ""
+    },
+    {
+      "role": "text",
+      "name": "Teléfono de contacto"
+    },
+    {
+      "role": "textbox",
+      "name": ""
+    },
+    {
+      "role": "text",
+      "name": "Porcentaje de titularidad"
+    },
+    {
+      "role": "textbox",
+      "name": ""
+    },
+    {
+      "role": "text",
+      "name": "Domicilio del titular"
+    },
+    {
+      "role": "text",
+      "name": "Calle y altura"
+    },
+    {
+      "role": "textbox",
+      "name": ""
+    },
+    {
+      "role": "text",
+      "name": "Piso"
+    },
+    {
+      "role": "textbox",
+      "name": ""
+    },
+    {
+      "role": "text",
+      "name": "Departamento"
+    },
+    {
+      "role": "textbox",
+      "name": ""
+    },
+    {
+      "role": "text",
+      "name": "Código Postal"
+    },
+    {
+      "role": "textbox",
+      "name": ""
+    },
+    {
+      "role": "text",
+      "name": "País"
+    },
+    {
+      "role": "textbox",
+      "name": "",
+      "readonly": true
+    },
+    {
+      "role": "text",
+      "name": "Aclaraciones"
+    },
+    {
+      "role": "text",
+      "name": "Observaciones"
+    },
+    {
+      "role": "textbox",
+      "name": "",
+      "multiline": true
+    },
+    {
+      "role": "textbox",
+      "name": "",
+      "multiline": true,
+      "readonly": true,
+      "value": "Se declara bajo juramento que los datos consignados en el presente formulario son exactos. La recepción de la obra no implica su inscripción si la presentación no se adecua a la normativa legal vigente. El precio del trámite incluye el valor de la tasa correspondiente al Fondo Nacional de las Artes. Si la inscripción es solicitada por un tercero, deberá presentarse con la correspondiente autorización con firma certificada de el/los responsable/s editor/es."
+    },
+    {
+      "role": "text",
+      "name": "Leído"
+    },
+    {
+      "role": "checkbox",
+      "name": "",
+      "checked": false
+    },
+    {
+      "role": "text",
+      "name": " "
+    },
+    {
+      "role": "text",
+      "name": "GUARDAR"
+    },
+    {
+      "role": "text",
+      "name": "Constancia de CUIT/CUIL"
+    },
+    {
+      "role": "link",
+      "name": " ADJUNTAR"
+    },
+    {
+      "role": "text",
+      "name": "Comprobante de Pago "
+    },
+    {
+      "role": "link",
+      "name": " ADJUNTAR"
+    },
+    {
+      "role": "text",
+      "name": "Copia de los instrumentos legales que acrediten la designación de su representante"
+    },
+    {
+      "role": "link",
+      "name": " ADJUNTAR"
+    },
+    {
+      "role": "text",
+      "name": "Condiciones del trámite "
+    },
+    {
+      "role": "text",
+      "name": " COMPLETAR"
+    },
+    {
+      "role": "text",
+      "name": "RE-2025-73887956-APN-DNDA#MJ"
+    },
+    {
+      "role": "text",
+      "name": " MODIFICAR"
+    },
+    {
+      "role": "text",
+      "name": " ELIMINAR"
+    },
+    {
+      "role": "text",
+      "name": " VER"
+    },
+    {
+      "role": "tab",
+      "name": "VOLVER"
+    },
+    {
+      "role": "tab",
+      "name": "CONFIRMAR TRÁMITE"
+    },
+    {
+      "role": "image",
+      "name": "Trámites a Distancia - Presidencia de la Nación"
+    },
+    {
+      "role": "text",
+      "name": "Preguntas Frecuentes"
+    },
+    {
+      "role": "text",
+      "name": "Contacto"
+    },
+    {
+      "role": "text",
+      "name": "Manual de Usuario"
+    },
+    {
+      "role": "text",
+      "name": "Términos y Condiciones"
+    }
+  ]
+}
