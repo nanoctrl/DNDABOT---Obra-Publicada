@@ -1,246 +1,213 @@
-Propuesta de Desarrollo Refinada: Paso 35 - Insertar Tipo de Documento para Editores
+# Propuesta de Desarrollo Refinada: Paso 35 - Insertar Tipo de Documento para Editores
 
-NOTA IMPORTANTE: Esta propuesta ha sido refinada basándose en el análisis detallado del estado de la página post-paso 34 y la información estructural obtenida del paso 36.
+## Resumen del Problema
 
-1. Objetivo del Paso 35
-Implementar la selección del tipo de documento (CUIT o CUIL) para TODOS los editores (tanto Persona Física como Persona Jurídica), manejando la aparición dinámica del campo de número de documento después de la selección.
-2. Información Clave Descubierta
-2.1 Estructura del Formulario
+El paso 35 actualmente funciona correctamente para el editor 1, pero falla consistentemente para los editores 2, 3 y 4. El análisis muestra que:
 
-Editores Persona Jurídica: El dropdown "Tipo de documento" está ubicado justo debajo del campo "Razón Social"
-Editores Persona Física: El dropdown "Tipo de documento" está ubicado justo debajo del campo "Tercer apellido"
+1. **Editor 1**: ✅ Se encuentra el dropdown, se selecciona el tipo de documento y se inserta el número correctamente
+2. **Editores 2-4**: ❌ No se pueden encontrar los dropdowns de tipo de documento
 
-2.2 Organización de Secciones
+## Insight Clave: Usar Campos del Paso 34 como Referencia
 
-Cada editor tiene dos secciones claramente delimitadas:
+Los campos completados en el paso 34 pueden servir como puntos de referencia únicos para cada editor:
 
-"Datos del Editor": Contiene información básica y el dropdown de tipo de documento
-"Domicilio del Editor": Contiene información de dirección
+- **Persona Jurídica**: El campo "Razón Social" está SIEMPRE justo arriba del dropdown "Tipo de documento"
+- **Persona Física**: El campo "Tercer apellido" (o "Primer apellido" como fallback) está SIEMPRE justo arriba del dropdown "Tipo de documento"
 
+Esta relación espacial es consistente y nos permite localizar con precisión el dropdown correcto para cada editor.
 
-Los formularios de editores aparecen en orden secuencial (Editor 1, Editor 2, etc.)
-Cada aparición del texto "Datos del Editor" marca el inicio de un nuevo formulario de editor
+## Estrategia de Solución Basada en Contexto
 
-2.3 Datos del JSON Procesado
-json{
-  "editores": [
-    { "tipoPersona": "Persona Juridica", "fiscalId": { "tipo": "CUIT", "numero": "33-11111111-1" } },
-    { "tipoPersona": "Persona Fisica", "fiscalId": { "tipo": "CUIL", "numero": "27-22222222-2" } },
-    { "tipoPersona": "Persona Juridica", "fiscalId": { "tipo": "CUIT", "numero": "30-33333333-3" } },
-    { "tipoPersona": "Persona Fisica", "fiscalId": { "tipo": "CUIL", "numero": "20-44444444-4" } }
-  ]
-}
-3. Estrategia de Implementación Refinada
-3.1 Análisis Inicial del DOM
-typescriptprivate async analizarEstructuraEditores(): Promise<Map<number, EditorContext>> {
-  const editoresMap = new Map<number, EditorContext>();
+### 1. Localizar Editor por Campos Únicos del Paso 34
+
+```typescript
+private async localizarDropdownPorCamposReferencia(
+  editor: any,
+  editorIndex: number
+): Promise<any> {
+  this.logger.info(`🎯 Localizando dropdown para editor ${editorIndex + 1} usando campos de referencia`);
   
-  // Buscar todas las secciones "Datos del Editor"
-  const editorSections = await this.page.locator('text="Datos del Editor"').all();
-  this.logger.info(`📊 Encontradas ${editorSections.length} secciones de editores`);
+  let campoReferencia = null;
+  let tipoCampoReferencia = '';
   
-  for (let i = 0; i < editorSections.length; i++) {
-    const section = editorSections[i];
+  if (editor.tipoPersona === 'Persona Juridica') {
+    // Para Persona Jurídica: usar Razón Social como referencia
+    const razonSocial = editor.razonSocial;
+    this.logger.info(`🏢 Buscando por Razón Social: "${razonSocial}"`);
     
-    // Determinar el contenedor del editor (tabla o div padre)
-    const editorContainer = await section.locator('xpath=ancestor::table[1] | ancestor::div[contains(@class, "z-div")][1]').first();
+    // Buscar el input que contiene exactamente este valor
+    campoReferencia = await this.page.locator(`input[value="${razonSocial}"]:visible`).first();
+    tipoCampoReferencia = 'Razón Social';
     
-    // Analizar si es Persona Física o Jurídica basándose en campos visibles
-    const tipoPersona = await this.detectarTipoPersonaEditor(editorContainer, i);
+  } else if (editor.tipoPersona === 'Persona Fisica') {
+    // Para Persona Física: usar apellidos como referencia
+    // Prioridad: Tercer apellido > Segundo apellido > Primer apellido
+    const apellidos = [
+      { campo: 'tercerApellido', valor: editor.apellido?.tercerApellido },
+      { campo: 'segundoApellido', valor: editor.apellido?.segundoApellido },
+      { campo: 'primerApellido', valor: editor.apellido?.primerApellido }
+    ];
     
-    editoresMap.set(i, {
-      index: i,
-      sectionElement: section,
-      container: editorContainer,
-      tipoPersona: tipoPersona,
-      tipoDocumentoRow: null // Se buscará después
-    });
-  }
-  
-  return editoresMap;
-}
-3.2 Detección Inteligente del Tipo de Editor
-typescriptprivate async detectarTipoPersonaEditor(container: any, index: number): Promise<string> {
-  // Estrategia 1: Buscar campo "Razón Social" (indicador de Persona Jurídica)
-  const razonSocialCount = await container.locator('text="Razón Social"').count();
-  if (razonSocialCount > 0) {
-    this.logger.info(`✅ Editor ${index + 1} identificado como Persona Jurídica (campo Razón Social encontrado)`);
-    return 'Persona Juridica';
-  }
-  
-  // Estrategia 2: Buscar campos de nombre/apellido (indicador de Persona Física)
-  const nombreCount = await container.locator('text="Primer Nombre"').count();
-  const apellidoCount = await container.locator('text="Primer Apellido"').count();
-  
-  if (nombreCount > 0 || apellidoCount > 0) {
-    this.logger.info(`✅ Editor ${index + 1} identificado como Persona Física (campos nombre/apellido encontrados)`);
-    return 'Persona Fisica';
-  }
-  
-  // Estrategia 3: Usar datos del JSON como fallback
-  return 'Unknown';
-}
-3.3 Búsqueda Específica del Dropdown "Tipo de Documento"
-typescriptprivate async buscarDropdownTipoDocumento(
-  editorContext: EditorContext, 
-  editor: any
-): Promise<DropdownInfo | null> {
-  
-  const { container, tipoPersona, index } = editorContext;
-  
-  // Buscar la fila que contiene "Tipo de documento"
-  const tipoDocRows = await container.locator('tr:has-text("Tipo de documento")').all();
-  
-  if (tipoDocRows.length === 0) {
-    this.logger.warn(`⚠️ No se encontró fila "Tipo de documento" para editor ${index + 1}`);
-    return null;
-  }
-  
-  // Estrategia diferenciada según tipo de persona
-  let targetRow: any = null;
-  
-  if (tipoPersona === 'Persona Juridica') {
-    // Para Persona Jurídica: buscar después de "Razón Social"
-    for (const row of tipoDocRows) {
-      const prevText = await row.locator('xpath=preceding::tr[position()<=3]').allTextContents();
-      if (prevText.join(' ').includes('Razón Social')) {
-        targetRow = row;
-        this.logger.info(`🎯 Dropdown tipo documento encontrado después de Razón Social`);
-        break;
-      }
-    }
-  } else if (tipoPersona === 'Persona Fisica') {
-    // Para Persona Física: buscar después de "Tercer apellido"
-    for (const row of tipoDocRows) {
-      const prevText = await row.locator('xpath=preceding::tr[position()<=3]').allTextContents();
-      if (prevText.join(' ').includes('Tercer apellido')) {
-        targetRow = row;
-        this.logger.info(`🎯 Dropdown tipo documento encontrado después de Tercer apellido`);
-        break;
+    for (const { campo, valor } of apellidos) {
+      if (valor && valor.trim() !== '') {
+        this.logger.info(`👤 Buscando por ${campo}: "${valor}"`);
+        
+        // Buscar inputs que contengan este valor
+        const inputs = await this.page.locator(`input[value="${valor}"]:visible`).all();
+        
+        if (inputs.length > 0) {
+          // Si hay múltiples, usar el que corresponde al índice del editor
+          if (editorIndex < inputs.length) {
+            campoReferencia = inputs[editorIndex];
+          } else {
+            campoReferencia = inputs[0];
+          }
+          tipoCampoReferencia = campo;
+          break;
+        }
       }
     }
   }
   
-  if (!targetRow && tipoDocRows.length > 0) {
-    // Fallback: usar la primera fila encontrada dentro del contenedor
-    targetRow = tipoDocRows[0];
-    this.logger.warn(`⚠️ Usando primera fila "Tipo de documento" como fallback`);
+  if (!campoReferencia) {
+    throw new Error(`No se encontró campo de referencia para editor ${editorIndex + 1}`);
   }
   
-  if (!targetRow) {
-    return null;
-  }
+  this.logger.info(`✅ Campo de referencia encontrado: ${tipoCampoReferencia}`);
   
-  // Buscar el elemento interactivo del dropdown
-  const dropdownElement = await this.encontrarElementoDropdown(targetRow);
-  
-  return {
-    row: targetRow,
-    element: dropdownElement,
-    editorIndex: index
-  };
+  // Ahora buscar el dropdown "Tipo de documento" que está debajo de este campo
+  return await this.buscarDropdownDebajoDeCampo(campoReferencia, editorIndex);
 }
-3.4 Interacción con Dropdown ZK Framework
-typescriptprivate async seleccionarTipoDocumento(
-  dropdownInfo: DropdownInfo,
-  tipoDocumento: string,
-  editor: any
-): Promise<void> {
-  
-  const { element, editorIndex } = dropdownInfo;
-  
-  this.logger.info(`🔽 Seleccionando "${tipoDocumento}" para editor ${editorIndex + 1}`);
-  
-  // Screenshot antes
-  await takeScreenshot(this.page, `step35_before_tipo_doc_editor_${editorIndex + 1}`, 'debug');
+```
+
+### 2. Buscar Dropdown Relativo al Campo de Referencia
+
+```typescript
+private async buscarDropdownDebajoDeCampo(
+  campoReferencia: any,
+  editorIndex: number
+): Promise<any> {
+  this.logger.info(`🔍 Buscando dropdown "Tipo de documento" debajo del campo de referencia`);
   
   try {
-    // Manejo especial para dropdowns ZK
-    const tagName = await element.evaluate((el: any) => el.tagName.toLowerCase());
+    // Obtener la fila (tr) que contiene el campo de referencia
+    const filaReferencia = await campoReferencia.locator('xpath=ancestor::tr[1]').first();
     
-    if (tagName === 'select') {
-      // HTML Select estándar
-      await element.selectOption(tipoDocumento);
-      this.logger.info(`✅ Seleccionado con selectOption`);
-    } else {
-      // ZK Framework dropdown
-      await element.click();
-      await this.page.waitForTimeout(1000);
+    // Buscar en las siguientes 5 filas después del campo de referencia
+    const siguientesFilas = await filaReferencia.locator('xpath=following-sibling::tr[position()<=5]').all();
+    
+    this.logger.info(`📊 Analizando ${siguientesFilas.length} filas después del campo de referencia`);
+    
+    for (let i = 0; i < siguientesFilas.length; i++) {
+      const fila = siguientesFilas[i];
+      const textoFila = await fila.textContent();
       
-      // Buscar opciones en popup ZK
-      const optionSelected = await this.seleccionarOpcionZK(tipoDocumento);
-      
-      if (!optionSelected) {
-        throw new Error(`No se pudo seleccionar "${tipoDocumento}"`);
+      if (textoFila?.includes('Tipo de documento')) {
+        this.logger.info(`✅ Encontrada fila "Tipo de documento" en posición ${i + 1}`);
+        
+        // Buscar el elemento dropdown dentro de esta fila
+        const dropdown = await this.extraerDropdownDeFila(fila, editorIndex);
+        
+        if (dropdown) {
+          return dropdown;
+        }
       }
     }
     
-    // Esperar aparición del campo número
-    await this.page.waitForTimeout(2000);
+    // Si no se encontró, intentar estrategia alternativa
+    this.logger.warn(`⚠️ No se encontró "Tipo de documento" en las siguientes 5 filas, expandiendo búsqueda...`);
     
-    // Insertar número de documento si no es extranjero
-    if (tipoDocumento !== 'Extranjero' && editor.fiscalId?.numero) {
-      await this.insertarNumeroDocumento(dropdownInfo, editor);
+    // Buscar en un rango más amplio (10 filas)
+    const filasExtendidas = await filaReferencia.locator('xpath=following-sibling::tr[position()<=10]').all();
+    
+    for (const fila of filasExtendidas) {
+      const textoFila = await fila.textContent();
+      
+      if (textoFila?.includes('Tipo de documento')) {
+        const dropdown = await this.extraerDropdownDeFila(fila, editorIndex);
+        if (dropdown) {
+          return dropdown;
+        }
+      }
     }
-    
-    // Screenshot después
-    await takeScreenshot(this.page, `step35_after_tipo_doc_editor_${editorIndex + 1}`, 'milestone');
     
   } catch (error) {
-    this.logger.error(`❌ Error seleccionando tipo documento: ${error}`);
-    throw error;
+    this.logger.error(`❌ Error buscando dropdown relativo: ${error}`);
   }
+  
+  return null;
 }
-3.5 Manejo del Campo Número de Documento
-typescriptprivate async insertarNumeroDocumento(
-  dropdownInfo: DropdownInfo,
-  editor: any
-): Promise<void> {
+```
+
+### 3. Extraer Elemento Dropdown de la Fila
+
+```typescript
+private async extraerDropdownDeFila(fila: any, editorIndex: number): Promise<any> {
+  this.logger.info(`🎯 Extrayendo elemento dropdown de la fila`);
   
-  const { row, editorIndex } = dropdownInfo;
-  
-  this.logger.info(`📝 Buscando campo número para insertar: ${editor.fiscalId.numero}`);
-  
-  // El campo número aparece dinámicamente después del dropdown
-  // Buscar en las siguientes 5 filas
-  const followingRows = row.locator('xpath=following-sibling::tr[position()<=5]');
-  
-  // Estrategias de búsqueda del campo número
-  const numeroFieldSelectors = [
-    'input[name*="cuit"]:visible',
-    'input[name*="cuil"]:visible',
-    'input[name*="numero"]:visible',
-    'input[name*="documento"]:visible',
-    'input[type="text"]:visible:not([name*="razon_social"]):not([name*="nombre"]):not([name*="apellido"])'
+  // Estrategias ordenadas por probabilidad de éxito
+  const dropdownSelectors = [
+    // 1. Select HTML estándar
+    'select:visible',
+    
+    // 2. ZK Combobox button (más específico primero)
+    '.z-combobox-btn:visible',
+    'button.z-combobox-btn:visible',
+    'i.z-combobox-btn-icon',
+    
+    // 3. Botón con imagen de combo
+    'button:has(img[src*="combo"]):visible',
+    
+    // 4. Elementos en la segunda celda (donde suele estar el valor)
+    'td:nth-child(2) button:visible',
+    'td:nth-child(2) select:visible',
+    'td:nth-child(2) .z-combobox:visible',
+    
+    // 5. Cualquier elemento clickeable
+    '[onclick]:visible',
+    '[role="combobox"]:visible'
   ];
   
-  let numeroField = null;
-  
-  for (const selector of numeroFieldSelectors) {
-    const fields = await followingRows.locator(selector).all();
-    if (fields.length > 0) {
-      // Tomar el primer campo que no sea de otro contexto
-      numeroField = fields[0];
-      const name = await numeroField.getAttribute('name') || '';
-      this.logger.info(`🎯 Campo número encontrado: name="${name}"`);
-      break;
+  for (const selector of dropdownSelectors) {
+    try {
+      const elementos = await fila.locator(selector).all();
+      
+      if (elementos.length > 0) {
+        const elemento = elementos[0];
+        
+        // Verificar que es interactivo
+        const esInteractivo = await elemento.evaluate(el => {
+          return el.onclick !== null || 
+                 el.tagName.toLowerCase() === 'select' || 
+                 el.tagName.toLowerCase() === 'button' ||
+                 el.classList.contains('z-combobox-btn') ||
+                 el.getAttribute('role') === 'combobox';
+        });
+        
+        if (esInteractivo) {
+          const tagName = await elemento.evaluate(el => el.tagName.toLowerCase());
+          this.logger.info(`✅ Dropdown encontrado: ${tagName} con selector "${selector}"`);
+          
+          return {
+            element: elemento,
+            type: tagName === 'select' ? 'select' : 'zk_dropdown',
+            editorIndex: editorIndex
+          };
+        }
+      }
+    } catch (error) {
+      this.logger.debug(`Selector ${selector} falló: ${error}`);
     }
   }
   
-  if (numeroField) {
-    await numeroField.click();
-    await numeroField.clear();
-    await numeroField.fill(editor.fiscalId.numero);
-    this.logger.info(`✅ Número documento insertado: ${editor.fiscalId.numero}`);
-  } else {
-    this.logger.warn(`⚠️ No se encontró campo número después de seleccionar tipo documento`);
-  }
+  this.logger.warn(`⚠️ No se encontró elemento dropdown en la fila`);
+  return null;
 }
-4. Implementación Completa del Método
-typescript/**
- * Paso 35: Insertar Tipo de Documento para TODOS los Editores
- * Maneja tanto Persona Física como Persona Jurídica
- */
+```
+
+### 4. Implementación Principal Mejorada
+
+```typescript
 private async insertarDatosCompletosEditoresDocumento(editores: any[]): Promise<void> {
   const stepTracker = getStepTracker();
   stepTracker.startStep(35);
@@ -257,52 +224,92 @@ private async insertarDatosCompletosEditoresDocumento(editores: any[]): Promise<
     }
 
     this.logger.info(`📊 Procesando tipo de documento para ${editores.length} editores`);
+    this.logger.info(`🔑 Estrategia: Usar campos del paso 34 como referencia`);
 
-    // FASE 1: Análisis inicial de la estructura
-    const editoresContextMap = await this.analizarEstructuraEditores();
-    
-    // FASE 2: Procesar cada editor
+    // Screenshot inicial
+    await takeScreenshot(this.page, 'step35_inicio', 'debug');
+
+    let editoresCompletados = 0;
+    const resultados: any[] = [];
+
+    // Procesar cada editor
     for (let i = 0; i < editores.length; i++) {
       const editor = editores[i];
-      const editorContext = editoresContextMap.get(i);
-      
-      if (!editorContext) {
-        this.logger.error(`❌ No se encontró contexto para editor ${i + 1}`);
-        continue;
-      }
       
       this.logger.info(`\n🔄 Procesando Editor ${i + 1}/${editores.length}: ${editor.tipoPersona}`);
       
       try {
-        // Buscar dropdown específico para este editor
-        const dropdownInfo = await this.buscarDropdownTipoDocumento(editorContext, editor);
+        // 1. Localizar dropdown usando campos de referencia del paso 34
+        const dropdownInfo = await this.localizarDropdownPorCamposReferencia(editor, i);
         
         if (!dropdownInfo) {
-          throw new Error(`No se encontró dropdown tipo documento para editor ${i + 1}`);
+          throw new Error(`No se encontró dropdown para editor ${i + 1}`);
         }
         
-        // Determinar tipo de documento
+        // 2. Determinar tipo de documento
         const tipoDocumento = this.determinarTipoDocumento(editor);
+        this.logger.info(`📄 Tipo documento: ${tipoDocumento}`);
         
-        // Seleccionar tipo e insertar número
-        await this.seleccionarTipoDocumento(dropdownInfo, tipoDocumento, editor);
+        // 3. Seleccionar tipo de documento
+        await this.seleccionarTipoDocumentoConVerificacion(dropdownInfo, tipoDocumento, i);
+        
+        // 4. Esperar a que aparezca el campo de número
+        await this.page.waitForTimeout(2000);
+        
+        // 5. Insertar número si corresponde
+        if (tipoDocumento !== 'Extranjero' && editor.fiscalId?.numero) {
+          await this.insertarNumeroDocumentoConContexto(editor, i);
+        }
+        
+        editoresCompletados++;
+        resultados.push({
+          index: i + 1,
+          tipoPersona: editor.tipoPersona,
+          tipoDocumento: tipoDocumento,
+          numeroDocumento: editor.fiscalId?.numero,
+          exitoso: true,
+          mensaje: 'Completado correctamente'
+        });
         
         this.logger.info(`✅ Editor ${i + 1} completado exitosamente`);
+        
+        // Screenshot después de cada editor
+        await takeScreenshot(this.page, `step35_editor_${i + 1}_completado`, 'milestone');
         
       } catch (error) {
         this.logger.error(`❌ Error procesando editor ${i + 1}: ${error}`);
         await takeScreenshot(this.page, `error_step35_editor_${i + 1}`, 'error');
-        // Continuar con el siguiente editor
+        
+        resultados.push({
+          index: i + 1,
+          tipoPersona: editor.tipoPersona,
+          tipoDocumento: this.determinarTipoDocumento(editor),
+          numeroDocumento: editor.fiscalId?.numero,
+          exitoso: false,
+          mensaje: `Error: ${error}`
+        });
+        
+        // Decidir si continuar
+        if (i === 0) {
+          // Si falla el primer editor, es crítico
+          throw error;
+        } else {
+          // Para otros editores, registrar error pero continuar
+          this.logger.warn(`⚠️ Continuando con siguiente editor después del error`);
+        }
       }
       
-      // Esperar entre editores para estabilización
+      // Esperar entre editores
       if (i < editores.length - 1) {
         await this.page.waitForTimeout(1500);
       }
     }
     
-    stepTracker.logSuccess(35, `Tipo documento configurado para ${editores.length} editores`);
-    this.logger.info(`\n✅ PASO 35 COMPLETADO - Todos los editores procesados`);
+    // Generar resumen
+    this.generarResumenPaso35(resultados);
+    
+    stepTracker.logSuccess(35, `Tipo documento procesado para ${editoresCompletados}/${editores.length} editores`);
+    this.logger.info(`\n✅ PASO 35 COMPLETADO - ${editoresCompletados}/${editores.length} editores procesados exitosamente`);
 
   } catch (error) {
     this.logger.error('❌ Error en Paso 35:', error);
@@ -311,10 +318,178 @@ private async insertarDatosCompletosEditoresDocumento(editores: any[]): Promise<
     throw error;
   }
 }
+```
 
-/**
- * Determinar tipo de documento basado en datos del editor
- */
+### 5. Métodos de Soporte Adicionales
+
+```typescript
+private async seleccionarTipoDocumentoConVerificacion(
+  dropdownInfo: any,
+  tipoDocumento: string,
+  editorIndex: number
+): Promise<void> {
+  const { element, type } = dropdownInfo;
+  
+  this.logger.info(`🔽 Seleccionando "${tipoDocumento}" para editor ${editorIndex + 1}`);
+  
+  // Screenshot antes
+  await takeScreenshot(this.page, `step35_before_select_editor_${editorIndex + 1}`, 'debug');
+  
+  try {
+    if (type === 'select') {
+      // HTML Select estándar
+      await element.selectOption(tipoDocumento);
+      await this.page.waitForTimeout(500);
+      
+      // Verificar selección
+      const valorSeleccionado = await element.inputValue();
+      if (valorSeleccionado === tipoDocumento) {
+        this.logger.info(`✅ Tipo documento seleccionado correctamente`);
+      }
+      
+    } else {
+      // ZK Framework dropdown
+      await element.click();
+      await this.page.waitForTimeout(1000);
+      
+      // Buscar y clickear la opción
+      const opcionEncontrada = await this.seleccionarOpcionZK(tipoDocumento);
+      
+      if (!opcionEncontrada) {
+        throw new Error(`No se pudo seleccionar opción "${tipoDocumento}"`);
+      }
+    }
+    
+    // Screenshot después
+    await takeScreenshot(this.page, `step35_after_select_editor_${editorIndex + 1}`, 'debug');
+    
+  } catch (error) {
+    this.logger.error(`❌ Error seleccionando tipo documento: ${error}`);
+    throw error;
+  }
+}
+
+private async seleccionarOpcionZK(tipoDocumento: string): Promise<boolean> {
+  // Buscar opciones visibles
+  const opcionSelectors = [
+    `text="${tipoDocumento}"`,
+    `.z-comboitem:has-text("${tipoDocumento}")`,
+    `td:visible:has-text("${tipoDocumento}")`,
+    `[role="option"]:has-text("${tipoDocumento}")`,
+    `li:visible:has-text("${tipoDocumento}")`
+  ];
+  
+  for (const selector of opcionSelectors) {
+    try {
+      const opcion = this.page.locator(selector).first();
+      if (await opcion.isVisible({ timeout: 2000 })) {
+        await opcion.click();
+        this.logger.info(`✅ Opción "${tipoDocumento}" clickeada`);
+        return true;
+      }
+    } catch (e) {
+      // Continuar con siguiente selector
+    }
+  }
+  
+  return false;
+}
+
+private async insertarNumeroDocumentoConContexto(
+  editor: any,
+  editorIndex: number
+): Promise<void> {
+  const numero = editor.fiscalId?.numero;
+  if (!numero) return;
+  
+  this.logger.info(`📝 Insertando número documento: ${numero}`);
+  
+  // Usar la misma estrategia: buscar desde el campo de referencia
+  let campoReferencia = null;
+  
+  if (editor.tipoPersona === 'Persona Juridica') {
+    campoReferencia = await this.page.locator(`input[value="${editor.razonSocial}"]:visible`).first();
+  } else {
+    // Buscar por apellidos
+    const apellidos = [editor.apellido?.tercerApellido, editor.apellido?.segundoApellido, editor.apellido?.primerApellido];
+    for (const apellido of apellidos) {
+      if (apellido) {
+        const inputs = await this.page.locator(`input[value="${apellido}"]:visible`).all();
+        if (inputs.length > editorIndex) {
+          campoReferencia = inputs[editorIndex];
+          break;
+        } else if (inputs.length > 0) {
+          campoReferencia = inputs[0];
+          break;
+        }
+      }
+    }
+  }
+  
+  if (!campoReferencia) {
+    this.logger.warn(`⚠️ No se encontró campo de referencia para buscar campo número`);
+    return;
+  }
+  
+  // Buscar campo de número que apareció después de seleccionar tipo documento
+  const filaReferencia = await campoReferencia.locator('xpath=ancestor::tr[1]').first();
+  const siguientesFilas = await filaReferencia.locator('xpath=following-sibling::tr[position()<=10]').all();
+  
+  // Buscar inputs vacíos que puedan ser el campo de número
+  for (const fila of siguientesFilas) {
+    const inputs = await fila.locator('input[type="text"]:visible').all();
+    
+    for (const input of inputs) {
+      const valor = await input.inputValue();
+      const name = await input.getAttribute('name') || '';
+      
+      // Buscar campo vacío que no sea nombre/apellido/email/etc
+      if (valor === '' && 
+          !name.includes('nombre') && 
+          !name.includes('apellido') && 
+          !name.includes('email') &&
+          !name.includes('telefono') &&
+          !name.includes('porcentaje')) {
+        
+        // Probablemente es el campo de número
+        await input.click();
+        await input.fill(numero);
+        
+        // Verificar
+        const valorInsertado = await input.inputValue();
+        if (valorInsertado === numero) {
+          this.logger.info(`✅ Número documento insertado correctamente`);
+          return;
+        }
+      }
+    }
+  }
+  
+  this.logger.warn(`⚠️ No se encontró campo para insertar número documento`);
+}
+
+private generarResumenPaso35(resultados: any[]): void {
+  this.logger.info('\n📊 RESUMEN PASO 35:');
+  this.logger.info('═══════════════════════════════════════');
+  
+  let exitosos = 0;
+  let fallidos = 0;
+  
+  resultados.forEach((resultado) => {
+    const icono = resultado.exitoso ? '✅' : '❌';
+    this.logger.info(`${icono} Editor ${resultado.index}: ${resultado.tipoPersona} - ${resultado.tipoDocumento} - ${resultado.mensaje}`);
+    
+    if (resultado.exitoso) exitosos++;
+    else fallidos++;
+  });
+  
+  this.logger.info('═══════════════════════════════════════');
+  this.logger.info(`Total: ${resultados.length} editores`);
+  this.logger.info(`Exitosos: ${exitosos}`);
+  this.logger.info(`Fallidos: ${fallidos}`);
+  this.logger.info(`Tasa de éxito: ${((exitosos / resultados.length) * 100).toFixed(1)}%`);
+}
+
 private determinarTipoDocumento(editor: any): string {
   // Prioridad 1: Valor explícito en JSON
   if (editor.fiscalId?.tipo) {
@@ -338,78 +513,58 @@ private determinarTipoDocumento(editor: any): string {
   // Default
   return editor.tipoPersona === 'Persona Juridica' ? 'CUIT' : 'CUIL';
 }
-5. Mejoras Clave Respecto a la Propuesta Original
-5.1 Detección Contextual Mejorada
+```
 
-Identificación precisa del tipo de editor basada en campos visibles
-Ubicación específica del dropdown según el tipo de persona
-Validación cruzada con datos del JSON
+## Ventajas de esta Estrategia
 
-5.2 Manejo Robusto de Dropdowns
+1. **Precisión**: Usa datos únicos ya insertados como puntos de referencia inequívocos
+2. **Robustez**: No depende de índices o posiciones absolutas que pueden cambiar
+3. **Contexto**: Aprovecha la relación espacial consistente entre campos
+4. **Verificable**: Cada paso puede verificarse visualmente con los screenshots
 
-Soporte completo para ZK Framework
-Múltiples estrategias de selección de opciones
-Manejo de timeouts y esperas apropiadas
+## Casos de Prueba
 
-5.3 Inserción Inteligente de Número
+```typescript
+// El caso actual que falla
+const casoActual = {
+  editores: [
+    { 
+      tipoPersona: 'Persona Juridica', 
+      razonSocial: 'EDITORIAL MUSICAL S.A.',
+      fiscalId: { tipo: 'CUIT', numero: '33-11111111-1' } 
+    },
+    { 
+      tipoPersona: 'Persona Fisica',
+      apellido: { 
+        primerApellido: 'GARCÍA',
+        segundoApellido: 'LÓPEZ',
+        tercerApellido: 'MARTÍNEZ'
+      },
+      fiscalId: { tipo: 'CUIL', numero: '27-22222222-2' } 
+    },
+    { 
+      tipoPersona: 'Persona Juridica',
+      razonSocial: 'MÚSICA ARGENTINA SRL', 
+      fiscalId: { tipo: 'CUIT', numero: '30-33333333-3' } 
+    },
+    { 
+      tipoPersona: 'Persona Fisica',
+      apellido: {
+        primerApellido: 'RODRÍGUEZ',
+        segundoApellido: 'PÉREZ'
+      },
+      fiscalId: { tipo: 'CUIL', numero: '20-44444444-4' } 
+    }
+  ]
+};
+```
 
-Búsqueda dinámica del campo después de selección
-Filtrado de campos para evitar confusión con otros datos
-Validación de inserción exitosa
+## Integración
 
-5.4 Gestión de Errores
+Esta solución es compatible con el código existente. Solo requiere:
 
-Continuación con siguiente editor en caso de fallo
-Screenshots detallados en puntos críticos
-Logging exhaustivo para debugging
+1. Reemplazar el método `insertarDatosCompletosEditoresDocumento`
+2. Agregar los nuevos métodos auxiliares que usan campos como referencia
+3. Mantener métodos existentes como `determinarTipoDocumento`
 
-6. Consideraciones de Testing
-6.1 Casos de Prueba Recomendados
-javascriptconst testCases = [
-  // Caso 1: Solo Personas Jurídicas
-  { editores: [
-    { tipoPersona: 'Persona Juridica', fiscalId: { tipo: 'CUIT', numero: '30-11111111-1' } },
-    { tipoPersona: 'Persona Juridica', fiscalId: { tipo: 'CUIT', numero: '33-22222222-2' } }
-  ]},
-  
-  // Caso 2: Solo Personas Físicas
-  { editores: [
-    { tipoPersona: 'Persona Fisica', fiscalId: { tipo: 'CUIL', numero: '20-11111111-1' } },
-    { tipoPersona: 'Persona Fisica', fiscalId: { tipo: 'CUIL', numero: '27-22222222-2' } }
-  ]},
-  
-  // Caso 3: Mixto (como el actual)
-  { editores: [
-    { tipoPersona: 'Persona Juridica', fiscalId: { tipo: 'CUIT', numero: '30-11111111-1' } },
-    { tipoPersona: 'Persona Fisica', fiscalId: { tipo: 'CUIL', numero: '20-22222222-2' } }
-  ]},
-  
-  // Caso 4: Editor único
-  { editores: [
-    { tipoPersona: 'Persona Juridica', fiscalId: { tipo: 'CUIT', numero: '30-11111111-1' } }
-  ]}
-];
-6.2 Validaciones Post-Ejecución
-
-Verificar que todos los dropdowns fueron configurados
-Confirmar inserción de números de documento
-Validar que no se afectaron otros campos
-
-7. Integración con el Flujo Existente
-7.1 Dependencias
-
-Prerequisito: Paso 34 debe completarse exitosamente
-Datos requeridos: Array de editores con fiscalId.tipo y fiscalId.numero
-
-
-7. Testing Recomendado
-javascript// Test con diferentes combinaciones
-const testCases = [
-    { editores: [{ tipoPersona: 'Persona Juridica', cuit: '30-11111111-1' }] },
-    { editores: [{ tipoPersona: 'Persona Fisica', cuit: '20-22222222-2' }] },
-    { editores: [
-        { tipoPersona: 'Persona Juridica', cuit: '30-11111111-1' },
-        { tipoPersona: 'Persona Fisica', cuit: '20-22222222-2' }
-    ]}
-];
-Esta implementación proporciona una solución robusta y mantenible para el paso 35, reutilizando las estrategias probadas del paso 33 y adaptándolas al contexto específico de tipo de documento.
+La clave está en usar los datos ya insertados como "anclas" para localizar con precisión los dropdowns correctos.

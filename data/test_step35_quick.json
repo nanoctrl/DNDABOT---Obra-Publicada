@@ -1,0 +1,90 @@
+{
+  "obra": {
+    "titulo": "Test Step 35 Quick - 2 Editores",
+    "tipo": "Música y letra",
+    "album": true,
+    "cantidad_ejemplares": 100,
+    "genero_musical": "Test",
+    "esPublicacionWeb": true,
+    "urlPaginaWeb": "https://music.example.com/test-step35-quick",
+    "lugar_publicacion": "Ciudad Autónoma de Buenos Aires",
+    "fecha_publicacion": "15-07-2025"
+  },
+  "autores": [
+    {
+      "nombre": {
+        "primerNombre": "Test",
+        "segundoNombre": "",
+        "tercerNombre": ""
+      },
+      "apellido": {
+        "primerApellido": "Step35",
+        "segundoApellido": "",
+        "tercerApellido": ""
+      },
+      "fiscalId": {
+        "tipo": "CUIT",
+        "numero": "20-11111111-1"
+      },
+      "nacionalidad": "Argentina",
+      "rol": "Música y Letra"
+    }
+  ],
+  "editores": [
+    {
+      "tipoPersona": "Persona Juridica",
+      "razonSocial": "Test Editorial S.A.",
+      "fiscalId": {
+        "tipo": "CUIT",
+        "numero": "33-11111111-1"
+      },
+      "email": "test1@example.com",
+      "telefono": "11 1111 1111",
+      "porcentajeTitularidad": 50,
+      "domicilio": {
+        "calleYNumero": "Test 1000",
+        "piso": "1",
+        "departamento": "A",
+        "cp": "1043",
+        "localidad": "CIUDAD AUTÓNOMA DE BUENOS AIRES",
+        "provincia": "CIUDAD AUTÓNOMA DE BUENOS AIRES",
+        "pais": "Argentina"
+      }
+    },
+    {
+      "tipoPersona": "Persona Fisica",
+      "nombre": {
+        "primerNombre": "Test",
+        "segundoNombre": "",
+        "tercerNombre": ""
+      },
+      "apellido": {
+        "primerApellido": "Editor",
+        "segundoApellido": "",
+        "tercerApellido": ""
+      },
+      "fiscalId": {
+        "tipo": "CUIL",
+        "numero": "27-22222222-2"
+      },
+      "email": "test2@example.com",
+      "telefono": "11 2222 2222",
+      "porcentajeTitularidad": 50,
+      "domicilio": {
+        "calleYNumero": "Test 2000",
+        "piso": "2",
+        "departamento": "B",
+        "cp": "1425",
+        "localidad": "CIUDAD AUTÓNOMA DE BUENOS AIRES",
+        "provincia": "CIUDAD AUTÓNOMA DE BUENOS AIRES",
+        "pais": "Argentina"
+      }
+    }
+  ],
+  "gestor": {
+    "cuitCuil": "20352552721",
+    "claveAfip": "Levitateme5023",
+    "representado": "EPSA PUBLISHING S A",
+    "emailNotificaciones": "nmaeso@gmail.com"
+  }
+}

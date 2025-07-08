@@ -38,3 +38,6 @@ output/selector_audit/*
 !output/debug_runs/.gitkeep
 !output/exploration_results/.gitkeep
 !output/selector_audit/.gitkeep
+
+# Allow step36 analysis files
+!output/runs/step36_final_analysis_*/

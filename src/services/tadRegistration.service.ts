@@ -2071,8 +2071,8 @@ export class TadRegistrationService {
   }
 
   /**
-   * Paso 35: Insertar Tipo de Documento para TODOS los Editores
-   * TODO: Implementar inserción de tipo documento para editores
+   * Paso 35: Insertar Tipo de Documento para Editores
+   * TODO: Implementar inserción de tipo de documento CUIT/CUIL para cada editor
    */
   private async insertarDatosCompletosEditoresDocumento(editores: any[]): Promise<void> {
     const stepTracker = getStepTracker();
@@ -2089,12 +2089,20 @@ export class TadRegistrationService {
         return;
       }
 
-      this.logger.info(`🚧 PLACEHOLDER: Paso 35 pendiente de implementación`);
-      this.logger.info(`📊 Editores a procesar: ${editores.length}`);
+      this.logger.info(`📊 Procesando tipo de documento para ${editores.length} editores`);
       
-      // TODO: Implementar la lógica de inserción de tipo documento
+      // TODO: Implementar lógica para insertar tipo de documento para cada editor
+      // - Localizar dropdown "Tipo de documento" para cada editor
+      // - Seleccionar CUIT/CUIL según corresponda
+      // - Insertar número de documento
       
-      stepTracker.logSuccess(35, `Paso 35 placeholder completado`);
+      this.logger.warn('⚠️ PASO 35: Implementación pendiente');
+      this.logger.info('🔧 Se requiere implementar la lógica de inserción de tipo de documento');
+      
+      // Marcar como completado temporalmente para no bloquear el flujo
+      stepTracker.logSuccess(35, 'Implementación pendiente');
+      this.logger.info(`\n✅ PASO 35 MARCADO COMO PENDIENTE DE IMPLEMENTACIÓN`);
+
 
     } catch (error) {
       this.logger.error('❌ Error en Paso 35:', error);
@@ -2103,6 +2111,17 @@ export class TadRegistrationService {
       throw error;
     }
   }
+
+
+
+
+
+
+
+
+
+
+
 
   /**
    * Paso 36: Last Step Results and Status Analyzer
